@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Cowork Plugins - Industry Disruption Analysis</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --anthro-orange: #D97706;
+    --anthro-tan: #E8D5B7;
+    --anthro-dark: #0f0f0f;
+    --anthro-card: #1a1a2e;
+    --anthro-accent: #7C3AED;
+    --anthro-blue: #3B82F6;
+    --anthro-green: #10B981;
+    --anthro-pink: #EC4899;
+    --anthro-red: #EF4444;
+    --anthro-cyan: #06B6D4;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--anthro-dark);
+    color: #fff;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  .slide {
+    width: 100vw;
+    height: 100vh;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 50px 70px;
+    position: absolute;
+    top: 0; left: 0;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  .slide.active { display: flex; opacity: 1; }
+
+  .slide-number {
+    position: absolute;
+    top: 20px; right: 28px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: rgba(255,255,255,0.12);
+    font-weight: 600;
+  }
+
+  /* ── Common elements ── */
+  h2 {
+    font-size: 48px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    line-height: 1.1;
+  }
+  .tagline {
+    font-size: 19px;
+    color: rgba(255,255,255,0.45);
+    margin-bottom: 36px;
+    text-align: center;
+    max-width: 750px;
+  }
+  .grad-red { background: linear-gradient(135deg, #EF4444 0%, #F59E0B 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .grad-purple { background: linear-gradient(135deg, #a78bfa 0%, #EC4899 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .grad-cyan { background: linear-gradient(135deg, #06B6D4 0%, #3B82F6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .grad-green { background: linear-gradient(135deg, #10B981 0%, #6ee7b7 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .grad-orange { background: linear-gradient(135deg, #F59E0B 0%, #fff 50%, #D97706 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .grad-pink { background: linear-gradient(135deg, #EC4899 0%, #a78bfa 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+  .source-ref {
+    position: absolute;
+    bottom: 18px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    color: rgba(255,255,255,0.2);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .source-ref a { color: rgba(255,255,255,0.3); text-decoration: none; }
+
+  /* ── Navigation ── */
+  .nav-controls {
+    position: fixed;
+    bottom: 20px; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 12px; z-index: 100;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(12px);
+    padding: 8px 20px; border-radius: 100px;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .nav-btn {
+    background: rgba(255,255,255,0.08); border: none; color: #fff;
+    width: 36px; height: 36px; border-radius: 50%;
+    font-size: 16px; cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
+    transition: background 0.3s;
+  }
+  .nav-btn:hover { background: rgba(255,255,255,0.15); }
+  .slide-counter {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; color: rgba(255,255,255,0.4);
+    min-width: 55px; text-align: center;
+  }
+  .progress-dots { display: flex; gap: 5px; }
+  .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: rgba(255,255,255,0.12); cursor: pointer;
+    transition: background 0.3s, transform 0.3s;
+  }
+  .dot.active { background: var(--anthro-red); transform: scale(1.4); }
+
+  /* ── Slide-specific styles ── */
+
+  /* S1: Title - DISRUPTION hook */
+  .s1 .alert-bar {
+    padding: 10px 28px; margin-bottom: 28px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 100px;
+    font-size: 14px; color: #fca5a5; font-weight: 600; letter-spacing: 0.5px;
+  }
+  .s1 h1 {
+    font-size: 62px; font-weight: 900; line-height: 1.05;
+    text-align: center; margin-bottom: 20px; max-width: 950px;
+    background: linear-gradient(135deg, #fff 0%, #fca5a5 40%, #EF4444 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .s1 .subtitle {
+    font-size: 20px; color: rgba(255,255,255,0.5);
+    text-align: center; max-width: 800px; line-height: 1.5;
+  }
+  .stock-tickers {
+    display: flex; gap: 16px; margin-top: 32px; flex-wrap: wrap; justify-content: center;
+  }
+  .stock-ticker {
+    padding: 8px 18px; background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(239, 68, 68, 0.15); border-radius: 10px;
+    font-family: 'JetBrains Mono', monospace; font-size: 13px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .stock-ticker .name { color: rgba(255,255,255,0.6); }
+  .stock-ticker .change { color: #EF4444; font-weight: 700; }
+
+  /* Disruption grid */
+  .disruption-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr);
+    gap: 16px; max-width: 950px; width: 100%;
+  }
+  .disruption-card {
+    padding: 22px; background: rgba(239, 68, 68, 0.03);
+    border: 1px solid rgba(239, 68, 68, 0.08); border-radius: 16px;
+    display: flex; gap: 14px; align-items: flex-start;
+  }
+  .disruption-card .d-icon { font-size: 28px; min-width: 36px; }
+  .disruption-card h4 { font-size: 15px; font-weight: 700; margin-bottom: 4px; color: #fca5a5; }
+  .disruption-card p { font-size: 13px; color: rgba(255,255,255,0.5); line-height: 1.4; }
+
+  /* Compare table */
+  .compare-table {
+    width: 100%; max-width: 1050px;
+    border-collapse: separate; border-spacing: 0 6px;
+  }
+  .compare-table th {
+    text-align: left; padding: 10px 18px;
+    font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.3); font-weight: 700;
+  }
+  .compare-table td {
+    padding: 14px 18px; background: rgba(255,255,255,0.02);
+    font-size: 14px; color: #d1d5db;
+  }
+  .compare-table tr td:first-child { border-radius: 12px 0 0 12px; font-weight: 700; color: #fff; }
+  .compare-table tr td:last-child { border-radius: 0 12px 12px 0; }
+  .compare-table .plugin-name { color: #a78bfa; }
+  .compare-table .threat-high { color: #EF4444; font-weight: 700; }
+  .compare-table .threat-med { color: #F59E0B; font-weight: 700; }
+
+  /* Deep dive cards */
+  .deep-grid {
+    display: grid; gap: 18px; max-width: 1100px; width: 100%;
+  }
+  .deep-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .deep-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .deep-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+  .deep-card {
+    padding: 26px; background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.06); border-radius: 18px;
+    position: relative; overflow: hidden;
+  }
+  .deep-card .icon { font-size: 30px; margin-bottom: 10px; }
+  .deep-card h4 { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+  .deep-card .sub { font-size: 12px; color: rgba(255,255,255,0.35); margin-bottom: 10px; }
+  .deep-card ul { list-style: none; padding: 0; }
+  .deep-card li {
+    font-size: 12.5px; color: rgba(255,255,255,0.55);
+    padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+  .deep-card li::before { content: '\2192\00a0'; color: #a78bfa; }
+  .deep-card .cmd-row {
+    display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px;
+  }
+  .deep-card .slash {
+    padding: 2px 8px; background: rgba(0,0,0,0.35); border-radius: 5px;
+    font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #93c5fd;
+  }
+
+  /* Insight cards */
+  .insight-cards {
+    display: grid; grid-template-columns: repeat(2, 1fr);
+    gap: 16px; max-width: 1000px; width: 100%;
+  }
+  .insight-card {
+    padding: 22px; border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .insight-card.bull { background: rgba(16, 185, 129, 0.04); border-color: rgba(16, 185, 129, 0.12); }
+  .insight-card.bear { background: rgba(239, 68, 68, 0.04); border-color: rgba(239, 68, 68, 0.12); }
+  .insight-card h4 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+  .insight-card.bull h4 { color: #6ee7b7; }
+  .insight-card.bear h4 { color: #fca5a5; }
+  .insight-card p { font-size: 13px; color: rgba(255,255,255,0.55); line-height: 1.5; }
+
+  /* Verdict boxes */
+  .verdict-boxes {
+    display: flex; gap: 20px; max-width: 1000px; width: 100%; flex-wrap: wrap;
+    justify-content: center;
+  }
+  .verdict-box {
+    flex: 1; min-width: 200px; max-width: 300px;
+    padding: 24px; border-radius: 18px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+    text-align: center;
+  }
+  .verdict-box .emoji { font-size: 40px; margin-bottom: 10px; }
+  .verdict-box h4 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .verdict-box p { font-size: 12.5px; color: rgba(255,255,255,0.5); line-height: 1.4; }
+
+  code {
+    padding: 2px 6px; background: rgba(0,0,0,0.3); border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #93c5fd;
+  }
+</style>
+</head>
+<body>
+
+<div id="presentation">
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 1: TITLE — DISRUPTION HOOK                              -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div class="slide s1 active" data-slide="1" style="background: radial-gradient(ellipse at 30% 20%, rgba(239,68,68,0.12) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(217,119,6,0.08) 0%, transparent 50%), linear-gradient(135deg, #0f0f0f 0%, #1a1a2e 50%, #0f0f0f 100%);">
+    <span class="slide-number">01</span>
+    <div class="alert-bar">📉 MARKET ALERT — Tech &amp; Consulting Stocks Slide After Anthropic Plugin Launch</div>
+    <h1>Claude Cowork Plugins Just Replaced Your Consultant</h1>
+    <p class="subtitle">Anthropic quietly launched 11 enterprise plugins that do the work of Sales Reps, Financial Analysts, Lawyers, Marketers, Data Analysts &amp; Support Agents — for $20/mo</p>
+    <div class="stock-tickers">
+      <div class="stock-ticker"><span class="name">ACN</span><span class="change">▼ Accenture</span></div>
+      <div class="stock-ticker"><span class="name">INFY</span><span class="change">▼ Infosys</span></div>
+      <div class="stock-ticker"><span class="name">CRM</span><span class="change">▼ Salesforce</span></div>
+      <div class="stock-ticker"><span class="name">ZEN</span><span class="change">▼ Zendesk</span></div>
+      <div class="stock-ticker"><span class="name">HUBS</span><span class="change">▼ HubSpot</span></div>
+      <div class="stock-ticker"><span class="name">WIT</span><span class="change">▼ Wipro</span></div>
+    </div>
+    <span class="source-ref"><a href="https://claude.com/plugins">claude.com/plugins</a> &middot; Feb 2026</span>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 2: WHY STOCKS DROPPED — The Disruption Thesis           -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div class="slide" data-slide="2" style="background: radial-gradient(ellipse at 50% 30%, rgba(239,68,68,0.1) 0%, transparent 50%), linear-gradient(135deg, #0f0f0f 0%, #1a1a2e 50%, #0f0f0f 100%);">
+    <span class="slide-number">02</span>
+    <h2 class="grad-red">📉 Why Tech &amp; Consulting Stocks Reacted</h2>
+    <p class="tagline">These aren't demos. These are production-grade, enterprise-ready AI agents with slash commands, MCP connectors, and sub-agent orchestration.</p>
+    <div class="disruption-grid">
+      <div class="disruption-card">
+        <span class="d-icon">💰</span>
+        <div>
+          <h4>$20/mo vs $300/hr Consultant</h4>
+          <p>Claude Pro at $20/mo now does sales research, financial analysis, legal review, and data analytics that consulting firms charge $200–500/hr for.</p>
+        </div>
+      </div>
+      <div class="disruption-card">
+        <span class="d-icon">⚡</span>
+        <div>
+          <h4>Instant, Not 6-Week Engagements</h4>
+          <p>Run <code>/variance-analysis</code> and get a financial variance breakdown in minutes, not a 6-week consulting project.</p>
+        </div>
+      </div>
+      <div class="disruption-card">
+        <span class="d-icon">🔌</span>
+        <div>
+          <h4>Plugs Into Your Existing Stack</h4>
+          <p>MCP connectors to Salesforce, Jira, Slack, HubSpot, Snowflake, BigQuery, Linear, Figma — replaces glue code &amp; integrators.</p>
+        </div>
+      </div>
+      <div class="disruption-card">
+        <span class="d-icon">🤖</span>
+        <div>
+          <h4>Multi-Agent, Not Single-Threaded</h4>
+          <p>Sub-agent coordination runs parallel workstreams. One task spawns specialized agents for research, analysis, and document creation simultaneously.</p>
+        </div>
+      </div>
+      <div class="disruption-card">
+        <span class="d-icon">🏢</span>
+        <div>
+          <h4>Enterprise-Ready from Day 1</h4>
+          <p>Available on Team &amp; Enterprise plans. Anthropic-verified. Open-source on GitHub. Organizations can customize every plugin to their playbook.</p>
+        </div>
+      </div>
+      <div class="disruption-card">
+        <span class="d-icon">🧠</span>
+        <div>
+          <h4>Powered by Opus 4.6 — SOTA Model</h4>
+          <p>1M context window, adaptive thinking, 90.2% on BigLaw Bench, #1 Terminal-Bench. These plugins run on the smartest model ever shipped.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 3: Plugin vs Industry — Who Gets Disrupted              -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div class="slide" data-slide="3" style="background: radial-gradient(ellipse at 40% 40%, rgba(124,58,237,0.1) 0%, transparent 50%), linear-gradient(135deg, #0f0f0f 0%, #1a1a2e 50%, #0f0f0f 100%);">
+    <span class="slide-number">03</span>
+    <h2 class="grad-purple">🎯 Plugin vs. Industry — Who Gets Disrupted?</h2>
+    <p class="tagline">Each Cowork plugin maps directly to a $B+ industry vertical</p>
+    <table class="compare-table">
+      <thead>
+        <tr><th>Plugin</th><th>What It Does</th><th>Disrupts</th><th>Threat</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="plugin-name">💰 Sales</span></td>
+          <td>CRM pipeline, prospecting, call summaries, forecasts</td>
+          <td>Salesforce, HubSpot, Outreach, SDR teams</td>
+          <td class="threat-high">🔴 HIGH</td>
+        </tr>
+        <tr>
+          <td><span class="plugin-name">💵 Finance</span></td>
+          <td>Journal entries, reconciliation, P&amp;L, SOX audit</td>
+          <td>EY, Deloitte, PwC, KPMG advisory</td>
+          <td class="threat-high">🔴 HIGH</td>
+        </tr>
+        <tr>
+          <td><span class="plugin-name">⚖️ Legal</span></td>
+          <td>Contract review, NDA triage, compliance, redlines</td>
+          <td>Harvey, legal ops, junior associates</td>
+          <td class="threat-high">🔴 HIGH</td>
+        </tr>
+        <tr>
+          <td><span class="plugin-name">📊 Data</span></td>
+          <td>SQL, dashboards, viz, statistical analysis</td>
+          <td>Tableau, Looker, data analyst contractors</td>
+          <td class="threat-high">🔴 HIGH</td>
+        </tr>
+        <tr>
+          <td><span class="plugin-name">🎧 Support</span></td>
+          <td>Triage, response drafts, escalation, KB articles</td>
+          <td>Zendesk, Intercom, support BPOs</td>
+          <td class="threat-high">🔴 HIGH</td>
+        </tr>
+        <tr>
+          <td><span class="plugin-name">📢 Marketing</span></td>
+          <td>Content, campaigns, SEO audit, email sequences</td>
+          <td>HubSpot, agencies, content studios</td>
+          <td class="threat-med">🟡 MED</td>
+        </tr>
+        <tr>
+          <td><span class="plugin-name">📦 Product</span></td>
+          <td>PRDs, roadmaps, stakeholder updates, metrics</td>
+          <td>Notion, Aha!, Productboard, PM consultants</td>
+          <td class="threat-med">🟡 MED</td>
+        </tr>
+        <tr>
+          <td><span class="plugin-name">📋 Productivity</span></td>
+          <td>Task mgmt, workplace memory, dashboard</td>
+          <td>Monday.com, Asana, virtual assistants</td>
+          <td class="threat-med">🟡 MED</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 4: SALES PLUGIN DEEP DIVE                               -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div class="slide" data-slide="4" style="background: radial-gradient(ellipse at 30% 50%, rgba(239,68,68,0.08) 0%, transparent 50%), linear-gradient(135deg, #0f0f0f 0%, #1a1a2e 50%, #0f0f0f 100%);">
+    <span class="slide-number">04</span>
+    <h2 class="grad-red">💰 Sales Plugin — "Your AI SDR"</h2>
+    <p class="tagline">Prospecting, pipeline analysis, call prep, competitive intel — the entire sales ops stack in one plugin</p>
+    <div class="deep-grid cols-3">
+      <div class="deep-card" style="border-top: 3px solid #EF4444;">
+        <div class="icon">📞</div>
+        <h4>Call Intelligence</h4>
+        <div class="sub">Replaces: Gong, Chorus, call note-takers</div>
+        <ul>
+          <li>Processes transcripts into structured summaries</li>
+          <li>Auto-extracts action items &amp; follow-ups</li>
+          <li>Generates discovery question suggestions</li>
+        </ul>
+        <div class="cmd-row"><span class="slash">/call-summary</span></div>
+      </div>
+      <div class="deep-card" style="border-top: 3px solid #F59E0B;">
+        <div class="icon">📊</div>
+        <h4>Pipeline &amp; Forecasting</h4>
+        <div class="sub">Replaces: Clari, Salesforce Einstein</div>
+        <ul>
+          <li>Weighted best/likely/worst scenarios</li>
+          <li>Flags stale deals &amp; at-risk accounts</li>
+          <li>Weekly action plan generation</li>
+        </ul>
+        <div class="cmd-row"><span class="slash">/forecast</span><span class="slash">/pipeline-review</span></div>
+      </div>
+      <div class="deep-card" style="border-top: 3px solid #a78bfa;">
+        <div class="icon">🎯</div>
+        <h4>Research &amp; Outreach</h4>
+        <div class="sub">Replaces: ZoomInfo, Outreach, Apollo</div>
+        <ul>
+          <li>Account research with key contacts</li>
+          <li>Competitive intelligence &amp; differentiation</li>
+          <li>Personalized outreach drafting</li>
+        </ul>
+        <div class="cmd-row"><span class="slash">auto-activates</span></div>
+      </div>
+    </div>
+    <span class="source-ref"><a href="https://claude.com/plugins/sales">claude.com/plugins/sales</a></span>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 5: FINANCE PLUGIN DEEP DIVE                             -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div class="slide" data-slide="5" style="background: radial-gradient(ellipse at 70% 40%, rgba(16,185,129,0.08) 0%, transparent 50%), linear-gradient(135deg, #0f0f0f 0%, #1a1a2e 50%, #0f0f0f 100%);">
+    <span class="slide-number">05</span>
+    <h2 class="grad-green">💵 Finance Plugin — "Your AI Financial Analyst"</h2>
+    <p class="tagline">Month-end close, journal entries, reconciliation, SOX compliance — the Big 4 advisory stack for $20/mo</p>
+    <div class="deep-grid cols-3">
+      <div class="deep-card" style="border-top: 3px solid #10B981;">
+        <div class="icon">📒</div>
+        <h4>Journal Entries &amp; Accruals</h4>
+        <div class="sub">Replaces: Junior accountants, staff auditors</div>
+        <ul>
+          <li>Proper debit/credit structuring</li>
+          <li>Fixed asset, prepaids, payroll entries</li>
+          <li>Accrual scheduling &amp; tracking</li>
+        </ul>
+        <div class="cmd-row"><span class="slash">/journal-entry</span></div>
+      </div>
+      <div class="deep-card" style="border-top: 3px solid #6ee7b7;">
+        <div class="icon">🔄</div>
+        <h4>Reconciliation &amp; Variance</h4>
+        <div class="sub">Replaces: BlackLine, recon analysts</div>
+        <ul>
+          <li>GL vs subledger/bank/3rd-party matching</li>
+          <li>Identifies reconciling items</li>
+          <li>Waterfall variance decomposition</li>
+        </ul>
+        <div class="cmd-row"><span class="slash">/reconciliation</span><span class="slash">/variance-analysis</span></div>
+      </div>
+      <div class="deep-card" style="border-top: 3px solid #34d399;">
+        <div class="icon">🛡️</div>
+        <h4>P&amp;L + SOX Compliance</h4>
+        <div class="sub">Replaces: EY/Deloitte advisory hours</div>
+        <ul>
+          <li>Income statements with period comparison</li>
+          <li>SOX testing workpaper generation</li>
+          <li>Connects to ERP via MCP</li>
+        </ul>
+        <div class="cmd-row"><span class="slash">/income-statement</span><span class="slash">/sox-testing</span></div>
+      </div>
+    </div>
+    <span class="source-ref"><a href="https://claude.com/plugins/finance">claude.com/plugins/finance</a></span>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 6: LEGAL PLUGIN DEEP DIVE                               -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div class="slide" data-slide="6" style="background: radial-gradient(ellipse at 40% 60%, rgba(124,58,237,0.08) 0%, transparent 50%), linear-gradient(135deg, #0f0f0f 0%, #1a1a2e 50%, #0f0f0f 100%);">
+    <span class="slide-number">06</span>
+    <h2 class="grad-purple">⚖️ Legal Plugin — "Your AI Paralegal"</h2>
+    <p class="tagline">Contract review, NDA triage, compliance workflows, vendor checks — scored 90.2% on BigLaw Bench</p>
+    <div class="deep-grid cols-3">
+      <div class="deep-card" style="border-top: 3px solid #a78bfa;">
+        <div class="icon">📋</div>
+        <h4>Contract Review</h4>
+        <div class="sub">Replaces: Junior associates, contract tools</div>
+        <ul>
+          <li>Clause-by-clause analysis</li>
+          <li>GREEN / YELLOW / RED risk flagging</li>
+          <li>Specific redline suggestions</li>
+          <li>Configurable negotiation playbook</li>
+        </ul>
+        <div class="cmd-row"><span class="slash">/review-contract</span></div>
+      </div>
+      <div class="deep-card" style="border-top: 3px solid #c4b5fd;">
+        <div class="icon">📄</div>
+        <h4>NDA &amp; Vendor Triage</h4>
+        <div class="sub">Replaces: Legal ops, intake workflows</div>
+        <ul>
+          <li>Rapid NDA pre-screening</li>
+          <li>Routes: standard / counsel / full review</li>
+          <li>Vendor agreement status tracking</li>
+        </ul>
+        <div class="cmd-row"><span class="slash">/triage-nda</span><span class="slash">/vendor-check</span></div>
+      </div>
+      <div class="deep-card" style="border-top: 3px solid #EC4899;">
+        <div class="icon">🔔</div>
+        <h4>Briefings &amp; Compliance</h4>
+        <div class="sub">Replaces: Research associates, compliance teams</div>
+        <ul>
+          <li>Daily legal briefs &amp; incident response</li>
+          <li>DSAR &amp; discovery hold responses</li>
+          <li>Topic research on demand</li>
+        </ul>
+        <div class="cmd-row"><span class="slash">/brief</span><span class="slash">/respond</span></div>
+      </div>
+    </div>
+    <span class="source-ref"><a href="https://claude.com/plugins/legal">claude.com/plugins/legal</a></span>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 7: DATA + MARKETING + SUPPORT + PM                      -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div class="slide" data-slide="7" style="background: radial-gradient(ellipse at 50% 50%, rgba(6,182,212,0.08) 0%, transparent 50%), linear-gradient(135deg, #0f0f0f 0%, #1a1a2e 50%, #0f0f0f 100%);">
+    <span class="slide-number">07</span>
+    <h2 class="grad-cyan">🔌 4 More Plugins That Shake Industries</h2>
+    <p class="tagline">Data Analytics, Marketing, Customer Support, Product Management — all with slash commands &amp; MCP</p>
+    <div class="deep-grid cols-4">
+      <div class="deep-card" style="border-top: 3px solid #06B6D4;">
+        <div class="icon">📊</div>
+        <h4>Data</h4>
+        <div class="sub">Replaces: Tableau, Looker, analysts</div>
+        <ul>
+          <li>SQL for Snowflake, BigQuery, Databricks</li>
+          <li>Interactive HTML dashboards</li>
+          <li>Statistical analysis &amp; profiling</li>
+        </ul>
+        <div class="cmd-row"><span class="slash">/analyze</span><span class="slash">/build-dashboard</span><span class="slash">/write-query</span></div>
+      </div>
+      <div class="deep-card" style="border-top: 3px solid #EC4899;">
+        <div class="icon">📢</div>
+        <h4>Marketing</h4>
+        <div class="sub">Replaces: Agencies, content studios</div>
+        <ul>
+          <li>Blog, social, email, PR drafts</li>
+          <li>Full campaign planning &amp; SEO</li>
+          <li>Email nurture sequences</li>
+        </ul>
+        <div class="cmd-row"><span class="slash">/draft-content</span><span class="slash">/campaign-plan</span><span class="slash">/seo-audit</span></div>
+      </div>
+      <div class="deep-card" style="border-top: 3px solid #F59E0B;">
+        <div class="icon">🎧</div>
+        <h4>Customer Support</h4>
+        <div class="sub">Replaces: Zendesk agents, BPOs</div>
+        <ul>
+          <li>Ticket triage &amp; routing</li>
+          <li>Multi-source research &amp; escalation</li>
+          <li>Auto KB article creation</li>
+        </ul>
+        <div class="cmd-row"><span class="slash">/triage</span><span class="slash">/draft-response</span><span class="slash">/kb-article</span></div>
+      </div>
+      <div class="deep-card" style="border-top: 3px solid #10B981;">
+        <div class="icon">📦</div>
+        <h4>Product Mgmt</h4>
+        <div class="sub">Replaces: PM tools, consultants</div>
+        <ul>
+          <li>PRD &amp; spec generation</li>
+          <li>Roadmap &amp; stakeholder updates</li>
+          <li>User research synthesis</li>
+        </ul>
+        <div class="cmd-row"><span class="slash">/write-spec</span><span class="slash">/roadmap-update</span><span class="slash">/metrics-review</span></div>
+      </div>
+    </div>
+    <span class="source-ref"><a href="https://claude.com/plugins">claude.com/plugins</a></span>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 8: How Cowork Architecture Works                        -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div class="slide" data-slide="8" style="background: radial-gradient(ellipse at 50% 30%, rgba(217,119,6,0.08) 0%, transparent 50%), linear-gradient(135deg, #0f0f0f 0%, #1a1a2e 50%, #0f0f0f 100%);">
+    <span class="slide-number">08</span>
+    <h2 class="grad-orange">⚙️ How Cowork Actually Works</h2>
+    <p class="tagline">Same agentic architecture as Claude Code — now for knowledge workers</p>
+    <div class="deep-grid cols-3">
+      <div class="deep-card" style="border-top: 3px solid #D97706;">
+        <div class="icon">🏗️</div>
+        <h4>Architecture</h4>
+        <ul>
+          <li>Runs in isolated VM on your Mac</li>
+          <li>Direct local file read/write access</li>
+          <li>Sub-agent parallel coordination</li>
+          <li>Long-running tasks (no timeouts)</li>
+          <li>Claude Agent SDK underneath</li>
+        </ul>
+      </div>
+      <div class="deep-card" style="border-top: 3px solid #F59E0B;">
+        <div class="icon">🔌</div>
+        <h4>Plugin System</h4>
+        <ul>
+          <li>One-click install from marketplace</li>
+          <li>Bundles: skills + connectors + slash commands + sub-agents</li>
+          <li>Customizable via conversation</li>
+          <li>Open source on GitHub</li>
+          <li>Create your own custom plugins</li>
+        </ul>
+      </div>
+      <div class="deep-card" style="border-top: 3px solid #fcd34d;">
+        <div class="icon">🔐</div>
+        <h4>Control &amp; Security</h4>
+        <ul>
+          <li>You choose which folders to share</li>
+          <li>Shows plan before acting</li>
+          <li>Explicit permission for file deletion</li>
+          <li>MCP connector permission controls</li>
+          <li>Prompt injection defenses built-in</li>
+        </ul>
+      </div>
+    </div>
+    <span class="source-ref"><a href="https://support.claude.com/en/articles/13345190-getting-started-with-cowork">support.claude.com — Getting Started with Cowork</a></span>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 9: Pricing — The Real Disruption Math                   -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div class="slide" data-slide="9" style="background: radial-gradient(ellipse at 60% 50%, rgba(239,68,68,0.08) 0%, transparent 50%), linear-gradient(135deg, #0f0f0f 0%, #1a1a2e 50%, #0f0f0f 100%);">
+    <span class="slide-number">09</span>
+    <h2 class="grad-red">💸 The Disruption Math</h2>
+    <p class="tagline">This is why Wall Street panicked</p>
+    <div class="deep-grid cols-3">
+      <div class="deep-card" style="border-top: 3px solid #EF4444; text-align: center;">
+        <div style="font-size: 60px; font-weight: 900; color: #EF4444; font-family: 'JetBrains Mono', monospace;">$20</div>
+        <div style="font-size: 13px; color: rgba(255,255,255,0.4); margin-bottom: 14px;">/month — Claude Pro</div>
+        <ul>
+          <li>All 11 Cowork plugins included</li>
+          <li>Sales, Finance, Legal, Data, Marketing</li>
+          <li>Opus 4.6 with 1M context</li>
+          <li>Sub-agent parallel processing</li>
+        </ul>
+      </div>
+      <div class="deep-card" style="border-top: 3px solid #F59E0B; text-align: center;">
+        <div style="font-size: 60px; font-weight: 900; color: #F59E0B; font-family: 'JetBrains Mono', monospace;">$100</div>
+        <div style="font-size: 13px; color: rgba(255,255,255,0.4); margin-bottom: 14px;">/month — Max 5x (heavy usage)</div>
+        <ul>
+          <li>5x the usage limits</li>
+          <li>Complex multi-step workflows</li>
+          <li>Queue parallel tasks</li>
+          <li>Still cheaper than 1 hr of consulting</li>
+        </ul>
+      </div>
+      <div class="deep-card" style="border-top: 3px solid rgba(255,255,255,0.2); text-align: center;">
+        <div style="font-size: 60px; font-weight: 900; color: rgba(255,255,255,0.3); font-family: 'JetBrains Mono', monospace;">$350</div>
+        <div style="font-size: 13px; color: rgba(255,255,255,0.4); margin-bottom: 14px;">/hour — Average Consulting Rate</div>
+        <ul>
+          <li style="color: rgba(255,255,255,0.3);">6-week engagement minimum</li>
+          <li style="color: rgba(255,255,255,0.3);">Travel &amp; expense add-ons</li>
+          <li style="color: rgba(255,255,255,0.3);">Knowledge walks out the door</li>
+          <li style="color: rgba(255,255,255,0.3);">Not available at 2 AM</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 10: Research Insights — Bull vs Bear                    -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div class="slide" data-slide="10" style="background: radial-gradient(ellipse at 50% 50%, rgba(16,185,129,0.08) 0%, transparent 50%), linear-gradient(135deg, #0f0f0f 0%, #1a1a2e 50%, #0f0f0f 100%);">
+    <span class="slide-number">10</span>
+    <h2 class="grad-green">🔬 Research Insights: Does This Really Impact Tech?</h2>
+    <p class="tagline">My analysis — the nuanced truth behind the market reaction</p>
+    <div class="insight-cards">
+      <div class="insight-card bear">
+        <h4>🔴 YES — IT Consulting Gets Compressed</h4>
+        <p>The Big 4 (Deloitte, EY, PwC, KPMG) charge $200–500/hr for financial analysis, SOX compliance, and process optimization. The Finance plugin literally does <code>/sox-testing</code> and <code>/variance-analysis</code>. Junior analyst roles and staff augmentation contracts are most at risk.</p>
+      </div>
+      <div class="insight-card bear">
+        <h4>🔴 YES — SaaS Point Solutions Under Pressure</h4>
+        <p>Why pay $150/seat/mo for Salesforce + Gong + Outreach + Clari when Sales plugin does pipeline review, call summaries, forecasting, and prospecting? Same for Zendesk, HubSpot Marketing, Tableau — each faces a $20/mo "good enough" competitor.</p>
+      </div>
+      <div class="insight-card bull">
+        <h4>🟢 NO — Enterprise Needs Human Judgment</h4>
+        <p>Plugins say "review by qualified professionals before use in filings." SOX audits need signatures. Litigation needs licensed attorneys. AI augments the <em>throughput</em> of professionals — it doesn't replace the <em>accountability</em> layer. Big consulting may sell more AI implementation services.</p>
+      </div>
+      <div class="insight-card bull">
+        <h4>🟢 NO — Integration Complexity Remains</h4>
+        <p>MCP connectors are powerful but require setup. Enterprise data is messy, siloed, and permissioned. Consulting firms will pivot to "AI enablement" — helping companies configure and deploy these plugins at scale. The pie may grow, not shrink.</p>
+      </div>
+      <div class="insight-card bear">
+        <h4>🔴 BPO &amp; Outsourcing Faces Real Threat</h4>
+        <p>Support BPOs (Concentrix, TTEC, Teleperformance) charge per ticket/agent. The Customer Support plugin does triage, research, drafting, and KB creation autonomously. For L1/L2 support, the ROI is undeniable and immediate.</p>
+      </div>
+      <div class="insight-card bull">
+        <h4>🟢 Platform Players May Benefit</h4>
+        <p>Salesforce, Atlassian, Notion have their own AI plays and can integrate Claude via API. Companies with proprietary data moats and workflow lock-in won't lose customers overnight — but margin pressure is real as the AI floor rises.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 11: VERDICT — Who Wins, Who Loses                      -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div class="slide" data-slide="11" style="background: radial-gradient(ellipse at 50% 50%, rgba(124,58,237,0.08) 0%, transparent 50%), linear-gradient(135deg, #0f0f0f 0%, #1a1a2e 50%, #0f0f0f 100%);">
+    <span class="slide-number">11</span>
+    <h2 class="grad-pink">⚖️ The Verdict: Winners &amp; Losers</h2>
+    <p class="tagline">Not every company loses — but everyone must adapt</p>
+    <div class="verdict-boxes">
+      <div class="verdict-box" style="border: 1px solid rgba(239,68,68,0.2);">
+        <div class="emoji">📉</div>
+        <h4 style="color: #fca5a5;">Most At Risk</h4>
+        <p>BPO support firms, junior analyst outsourcing, SaaS point solutions (single-feature tools), content agencies, manual data analysts, legal document review services</p>
+      </div>
+      <div class="verdict-box" style="border: 1px solid rgba(245,158,11,0.2);">
+        <div class="emoji">⚠️</div>
+        <h4 style="color: #fcd34d;">Must Adapt Fast</h4>
+        <p>Big 4 consulting (pivot to AI enablement), CRM platforms (integrate or be bypassed), marketing agencies (move up the strategy chain), IT staffing firms</p>
+      </div>
+      <div class="verdict-box" style="border: 1px solid rgba(16,185,129,0.2);">
+        <div class="emoji">📈</div>
+        <h4 style="color: #6ee7b7;">Likely Winners</h4>
+        <p>AI-native companies, professionals who master Cowork, system integrators deploying plugins at scale, compliance/audit firms (human sign-off required), Anthropic itself</p>
+      </div>
+    </div>
+    <div style="margin-top: 28px; max-width: 700px; text-align: center;">
+      <p style="font-size: 18px; color: rgba(255,255,255,0.6); line-height: 1.6; font-style: italic;">"The companies that will thrive are those that use these plugins to make their people 10x more productive — not those that ignore them."</p>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 12: CTA                                                 -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div class="slide" data-slide="12" style="background: radial-gradient(ellipse at 50% 40%, rgba(124,58,237,0.12) 0%, transparent 50%), radial-gradient(ellipse at 30% 80%, rgba(217,119,6,0.08) 0%, transparent 50%), linear-gradient(135deg, #0f0f0f 0%, #1a1a2e 50%, #0f0f0f 100%);">
+    <span class="slide-number">12</span>
+    <h2 class="grad-orange" style="font-size: 52px;">Try It Before You Judge It</h2>
+    <p class="tagline" style="max-width: 600px;">Every plugin is open source. Every claim is verifiable. Download Cowork and test the commands yourself.</p>
+    <div style="display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px;">
+      <a href="https://claude.com/plugins" style="padding: 14px 32px; background: linear-gradient(135deg, #7C3AED, #EC4899); border-radius: 14px; color: #fff; text-decoration: none; font-weight: 700; font-size: 15px;">🔌 Browse All Plugins</a>
+      <a href="https://claude.com/download" style="padding: 14px 32px; background: linear-gradient(135deg, #D97706, #F59E0B); border-radius: 14px; color: #0f0f0f; text-decoration: none; font-weight: 700; font-size: 15px;">⚡ Get Cowork</a>
+      <a href="https://github.com/anthropics/knowledge-work-plugins" style="padding: 14px 32px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; color: #fff; text-decoration: none; font-weight: 700; font-size: 15px;">📖 GitHub Source</a>
+    </div>
+    <div style="margin-top: 20px; padding: 14px 28px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; text-align: center;">
+      <p style="font-size: 14px; color: rgba(255,255,255,0.5);">📺 <strong style="color: #fff;">Like this breakdown?</strong> — Hit 👍 Subscribe 🔔 and drop your take in the comments: <span style="color: #fcd34d;">Are consultants done? Or is this just hype?</span></p>
+    </div>
+    <span class="source-ref"><a href="https://support.claude.com/en/articles/13345190-getting-started-with-cowork">Full guide: support.claude.com — Getting Started with Cowork</a></span>
+  </div>
+
+</div>
+
+<!-- Navigation -->
+<div class="nav-controls">
+  <button class="nav-btn" onclick="changeSlide(-1)">&#9664;</button>
+  <div class="progress-dots" id="dots"></div>
+  <span class="slide-counter" id="counter">1 / 12</span>
+  <button class="nav-btn" onclick="changeSlide(1)">&#9654;</button>
+</div>
+
+<script>
+  let cur = 1;
+  const total = 12;
+  const dots = document.getElementById('dots');
+  for (let i = 1; i <= total; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 1 ? ' active' : '');
+    d.onclick = () => go(i);
+    dots.appendChild(d);
+  }
+  function go(n) {
+    document.querySelector('.slide[data-slide="' + cur + '"]').classList.remove('active');
+    cur = n;
+    document.querySelector('.slide[data-slide="' + cur + '"]').classList.add('active');
+    document.getElementById('counter').textContent = cur + ' / ' + total;
+    document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i + 1 === cur));
+  }
+  function changeSlide(dir) {
+    let n = cur + dir;
+    if (n < 1) n = total;
+    if (n > total) n = 1;
+    go(n);
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); changeSlide(1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); changeSlide(-1); }
+  });
+</script>
+
+</body>
+</html>

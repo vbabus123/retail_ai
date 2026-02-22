@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Microsoft 365 Copilot — Enterprise AI Transformation</title>
+<link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ms-blue: #0078D4;
+    --ms-dark-blue: #003087;
+    --ms-purple: #7B83EB;
+    --ms-teal: #00B7C3;
+    --ms-green: #107C10;
+    --ms-orange: #FF8C00;
+    --ms-red: #D13438;
+    --ms-yellow: #FFB900;
+    --ms-dark: #0a0a14;
+    --ms-card: #111127;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    background: var(--ms-dark);
+    color: #fff;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  .slide {
+    width: 100vw;
+    height: 100vh;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 50px 70px;
+    position: absolute;
+    top: 0; left: 0;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  .slide.active { display: flex; opacity: 1; }
+
+  .slide-number {
+    position: absolute;
+    top: 20px; right: 28px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: rgba(255,255,255,0.12);
+    font-weight: 600;
+  }
+
+  h2 {
+    font-size: 46px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    line-height: 1.1;
+  }
+  .tagline {
+    font-size: 18px;
+    color: rgba(255,255,255,0.45);
+    margin-bottom: 34px;
+    text-align: center;
+    max-width: 780px;
+  }
+
+  .grad-blue { background: linear-gradient(135deg, #0078D4 0%, #00B7C3 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .grad-purple { background: linear-gradient(135deg, #7B83EB 0%, #0078D4 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .grad-teal { background: linear-gradient(135deg, #00B7C3 0%, #107C10 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .grad-green { background: linear-gradient(135deg, #107C10 0%, #00B7C3 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .grad-orange { background: linear-gradient(135deg, #FF8C00 0%, #FFB900 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .grad-red { background: linear-gradient(135deg, #D13438 0%, #FF8C00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .grad-gold { background: linear-gradient(135deg, #FFB900 0%, #fff 60%, #FF8C00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+  .source-ref {
+    position: absolute;
+    bottom: 18px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    color: rgba(255,255,255,0.2);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .source-ref a { color: rgba(255,255,255,0.3); text-decoration: none; }
+
+  /* Navigation */
+  .nav-controls {
+    position: fixed;
+    bottom: 20px; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 12px; z-index: 100;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(12px);
+    padding: 8px 20px; border-radius: 100px;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .nav-btn {
+    background: rgba(255,255,255,0.08); border: none; color: #fff;
+    width: 36px; height: 36px; border-radius: 50%;
+    font-size: 16px; cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
+    transition: background 0.3s;
+  }
+  .nav-btn:hover { background: rgba(255,255,255,0.15); }
+  .slide-counter {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; color: rgba(255,255,255,0.4);
+    min-width: 55px; text-align: center;
+  }
+  .progress-dots { display: flex; gap: 5px; }
+  .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: rgba(255,255,255,0.12); cursor: pointer;
+    transition: background 0.3s, transform 0.3s;
+  }
+  .dot.active { background: var(--ms-blue); transform: scale(1.4); }
+
+  /* Cards */
+  .deep-grid {
+    display: grid; gap: 18px; max-width: 1100px; width: 100%;
+  }
+  .deep-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .deep-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .deep-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+  .deep-card {
+    padding: 24px; background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.06); border-radius: 18px;
+    position: relative; overflow: hidden;
+  }
+  .deep-card .icon { font-size: 30px; margin-bottom: 10px; }
+  .deep-card h4 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .deep-card .sub { font-size: 12px; color: rgba(255,255,255,0.35); margin-bottom: 10px; }
+  .deep-card ul { list-style: none; padding: 0; }
+  .deep-card li {
+    font-size: 12.5px; color: rgba(255,255,255,0.55);
+    padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+  .deep-card li::before { content: '\2192\00a0'; color: #7B83EB; }
+  .deep-card .app-row {
+    display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px;
+  }
+  .deep-card .app-tag {
+    padding: 2px 8px; background: rgba(0,120,212,0.15); border-radius: 5px;
+    font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #7BBBF5;
+  }
+
+  /* Compare table */
+  .compare-table {
+    width: 100%; max-width: 1050px;
+    border-collapse: separate; border-spacing: 0 6px;
+  }
+  .compare-table th {
+    text-align: left; padding: 10px 18px;
+    font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.3); font-weight: 700;
+  }
+  .compare-table td {
+    padding: 13px 18px; background: rgba(255,255,255,0.02);
+    font-size: 13.5px; color: #d1d5db;
+  }
+  .compare-table tr td:first-child { border-radius: 12px 0 0 12px; font-weight: 700; color: #fff; }
+  .compare-table tr td:last-child { border-radius: 0 12px 12px 0; }
+  .fn-name { color: #7B83EB; }
+
+  /* Insight cards */
+  .insight-cards {
+    display: grid; grid-template-columns: repeat(2, 1fr);
+    gap: 16px; max-width: 1000px; width: 100%;
+  }
+  .insight-card {
+    padding: 22px; border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .insight-card.pro { background: rgba(0,120,212,0.04); border-color: rgba(0,120,212,0.15); }
+  .insight-card.con { background: rgba(209,52,56,0.04); border-color: rgba(209,52,56,0.12); }
+  .insight-card h4 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+  .insight-card.pro h4 { color: #7BBBF5; }
+  .insight-card.con h4 { color: #fca5a5; }
+  .insight-card p { font-size: 13px; color: rgba(255,255,255,0.55); line-height: 1.5; }
+
+  /* Disruption grid */
+  .disruption-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr);
+    gap: 16px; max-width: 950px; width: 100%;
+  }
+  .disruption-card {
+    padding: 22px; background: rgba(0,120,212,0.03);
+    border: 1px solid rgba(0,120,212,0.08); border-radius: 16px;
+    display: flex; gap: 14px; align-items: flex-start;
+  }
+  .disruption-card .d-icon { font-size: 28px; min-width: 36px; }
+  .disruption-card h4 { font-size: 15px; font-weight: 700; margin-bottom: 4px; color: #7BBBF5; }
+  .disruption-card p { font-size: 13px; color: rgba(255,255,255,0.5); line-height: 1.4; }
+
+  /* Verdict */
+  .verdict-boxes {
+    display: flex; gap: 20px; max-width: 1000px; width: 100%; flex-wrap: wrap;
+    justify-content: center;
+  }
+  .verdict-box {
+    flex: 1; min-width: 200px; max-width: 300px;
+    padding: 24px; border-radius: 18px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+    text-align: center;
+  }
+  .verdict-box .emoji { font-size: 40px; margin-bottom: 10px; }
+  .verdict-box h4 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .verdict-box p { font-size: 12.5px; color: rgba(255,255,255,0.5); line-height: 1.4; }
+
+  code {
+    padding: 2px 6px; background: rgba(0,0,0,0.3); border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #7BBBF5;
+  }
+</style>
+</head>
+<body>
+
+<div id="presentation">
+
+  <!-- ═══════ SLIDE 1: TITLE ═══════ -->
+  <div class="slide active" data-slide="1" style="background: radial-gradient(ellipse at 30% 20%, rgba(0,120,212,0.15) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(123,131,235,0.08) 0%, transparent 50%), linear-gradient(135deg, #0a0a14 0%, #111127 50%, #0a0a14 100%);">
+    <span class="slide-number">01</span>
+    <div style="padding: 10px 28px; margin-bottom: 28px; background: rgba(0,120,212,0.1); border: 1px solid rgba(0,120,212,0.2); border-radius: 100px; font-size: 14px; color: #7BBBF5; font-weight: 600; letter-spacing: 0.5px;">🚀 MICROSOFT 365 COPILOT — Powered by GPT-5 &amp; Work IQ</div>
+    <h1 style="font-size: 60px; font-weight: 900; line-height: 1.05; text-align: center; margin-bottom: 20px; max-width: 950px; background: linear-gradient(135deg, #fff 0%, #7BBBF5 40%, #0078D4 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Microsoft 365 Copilot: AI That Already Knows Your Business</h1>
+    <p style="font-size: 20px; color: rgba(255,255,255,0.5); text-align: center; max-width: 800px; line-height: 1.5;">12 departments. 100+ scenarios. Embedded in Word, Excel, PowerPoint, Outlook, Teams &amp; Copilot Studio — the enterprise AI platform 400M+ users already have.</p>
+    <div style="display: flex; gap: 16px; margin-top: 32px; flex-wrap: wrap; justify-content: center;">
+      <div style="padding: 8px 18px; background: rgba(0,0,0,0.4); border: 1px solid rgba(0,120,212,0.15); border-radius: 10px; font-family: 'JetBrains Mono', monospace; font-size: 13px; display: flex; align-items: center; gap: 8px;"><span style="color: rgba(255,255,255,0.6);">Word</span><span style="color: #0078D4; font-weight: 700;">✦ Copilot</span></div>
+      <div style="padding: 8px 18px; background: rgba(0,0,0,0.4); border: 1px solid rgba(16,124,16,0.15); border-radius: 10px; font-family: 'JetBrains Mono', monospace; font-size: 13px; display: flex; align-items: center; gap: 8px;"><span style="color: rgba(255,255,255,0.6);">Excel</span><span style="color: #107C10; font-weight: 700;">✦ Agent Mode</span></div>
+      <div style="padding: 8px 18px; background: rgba(0,0,0,0.4); border: 1px solid rgba(209,52,56,0.15); border-radius: 10px; font-family: 'JetBrains Mono', monospace; font-size: 13px; display: flex; align-items: center; gap: 8px;"><span style="color: rgba(255,255,255,0.6);">PowerPoint</span><span style="color: #D13438; font-weight: 700;">✦ Create</span></div>
+      <div style="padding: 8px 18px; background: rgba(0,0,0,0.4); border: 1px solid rgba(0,183,195,0.15); border-radius: 10px; font-family: 'JetBrains Mono', monospace; font-size: 13px; display: flex; align-items: center; gap: 8px;"><span style="color: rgba(255,255,255,0.6);">Teams</span><span style="color: #00B7C3; font-weight: 700;">✦ Recap</span></div>
+      <div style="padding: 8px 18px; background: rgba(0,0,0,0.4); border: 1px solid rgba(0,120,212,0.15); border-radius: 10px; font-family: 'JetBrains Mono', monospace; font-size: 13px; display: flex; align-items: center; gap: 8px;"><span style="color: rgba(255,255,255,0.6);">Outlook</span><span style="color: #0078D4; font-weight: 700;">✦ Coach</span></div>
+      <div style="padding: 8px 18px; background: rgba(0,0,0,0.4); border: 1px solid rgba(123,131,235,0.15); border-radius: 10px; font-family: 'JetBrains Mono', monospace; font-size: 13px; display: flex; align-items: center; gap: 8px;"><span style="color: rgba(255,255,255,0.6);">Studio</span><span style="color: #7B83EB; font-weight: 700;">✦ Agents</span></div>
+    </div>
+    <span class="source-ref"><a href="https://adoption.microsoft.com/en-us/copilot-scenario-library/">adoption.microsoft.com/scenario-library</a></span>
+  </div>
+
+  <!-- ═══════ SLIDE 2: WHY M365 COPILOT MATTERS ═══════ -->
+  <div class="slide" data-slide="2" style="background: radial-gradient(ellipse at 50% 30%, rgba(0,120,212,0.1) 0%, transparent 50%), linear-gradient(135deg, #0a0a14 0%, #111127 50%, #0a0a14 100%);">
+    <span class="slide-number">02</span>
+    <h2 class="grad-blue">⚡ Why M365 Copilot Changes Everything</h2>
+    <p class="tagline">It's not just a chatbot — it's an AI layer embedded in the apps 400M+ people already use daily</p>
+    <div class="disruption-grid">
+      <div class="disruption-card">
+        <span class="d-icon">🧠</span>
+        <div>
+          <h4>Work IQ — Knows You &amp; Your Org</h4>
+          <p>Connects your emails, files, meetings, and chats. Builds memory of your style, preferences, and workflows. Delivers intelligence tailored to YOU.</p>
+        </div>
+      </div>
+      <div class="disruption-card">
+        <span class="d-icon">🤖</span>
+        <div>
+          <h4>GPT-5 + Agent Mode</h4>
+          <p>Latest GPT-5 reasoning powers Copilot. Agent Mode in Excel surfaces insights and builds executive summaries. Researcher agent does multi-step analysis.</p>
+        </div>
+      </div>
+      <div class="disruption-card">
+        <span class="d-icon">📊</span>
+        <div>
+          <h4>Embedded in Every App</h4>
+          <p>Copilot lives inside Word, Excel, PowerPoint, Outlook, Teams, OneNote — no new tools to learn, no context switching, just AI in your flow of work.</p>
+        </div>
+      </div>
+      <div class="disruption-card">
+        <span class="d-icon">🏗️</span>
+        <div>
+          <h4>Copilot Studio — Build Your Own Agents</h4>
+          <p>Create custom AI agents with no code. Connect to LOB apps via 100+ connectors. Deploy to Teams, web, and apps. 79% of SMBs plan agents in 12-18 months.</p>
+        </div>
+      </div>
+      <div class="disruption-card">
+        <span class="d-icon">🔐</span>
+        <div>
+          <h4>Enterprise Security Built-In</h4>
+          <p>Your data never trains models. Inherits M365 permissions and sensitivity labels. Copilot Control System gives IT full oversight. SOC 2, ISO 27001 compliant.</p>
+        </div>
+      </div>
+      <div class="disruption-card">
+        <span class="d-icon">🌍</span>
+        <div>
+          <h4>12 Departments, 100+ Scenarios</h4>
+          <p>Microsoft built a full Scenario Library covering Finance, Sales, Legal, Marketing, HR, IT, Customer Service, Operations, and more — with step-by-step playbooks.</p>
+        </div>
+      </div>
+    </div>
+    <span class="source-ref"><a href="https://www.microsoft.com/en-us/microsoft-365/copilot">microsoft.com/microsoft-365/copilot</a></span>
+  </div>
+
+  <!-- ═══════ SLIDE 3: SCENARIO LIBRARY MAP ═══════ -->
+  <div class="slide" data-slide="3" style="background: radial-gradient(ellipse at 40% 40%, rgba(123,131,235,0.1) 0%, transparent 50%), linear-gradient(135deg, #0a0a14 0%, #111127 50%, #0a0a14 100%);">
+    <span class="slide-number">03</span>
+    <h2 class="grad-purple">🎯 12 Departments — One AI Platform</h2>
+    <p class="tagline">Microsoft's Scenario Library maps Copilot capabilities to every business function</p>
+    <table class="compare-table">
+      <thead>
+        <tr><th>Department</th><th>Key Use Cases</th><th>Copilot Tools</th><th>Agents</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="fn-name">💰 Finance</span></td>
+          <td>Guidance docs, spend anomaly, financial Q&amp;A, P&amp;L</td>
+          <td>Excel, Word, Outlook, Teams</td>
+          <td>Spend Anomaly, Finance Q&amp;A</td>
+        </tr>
+        <tr>
+          <td><span class="fn-name">📈 Sales</span></td>
+          <td>Customer research, pitches, RFPs, meeting prep</td>
+          <td>Copilot for Sales, Teams, PowerPoint</td>
+          <td>RFP Agent, Outreach, Training</td>
+        </tr>
+        <tr>
+          <td><span class="fn-name">⚖️ Legal</span></td>
+          <td>Contract review, compliance videos, IP protection</td>
+          <td>Word, Copilot Chat, Studio</td>
+          <td>IP Protection, IP Creation</td>
+        </tr>
+        <tr>
+          <td><span class="fn-name">📢 Marketing</span></td>
+          <td>Market research, campaigns, product feedback</td>
+          <td>Word, PowerPoint, Copilot Chat</td>
+          <td>Research Assistant</td>
+        </tr>
+        <tr>
+          <td><span class="fn-name">👥 HR</span></td>
+          <td>Job transitions, manager insights, recruiting</td>
+          <td>Word, Teams, Outlook</td>
+          <td>Employee Self-Service</td>
+        </tr>
+        <tr>
+          <td><span class="fn-name">🖥️ IT</span></td>
+          <td>Service desk, root cause, change mgmt, security</td>
+          <td>Teams, Security Copilot, Studio</td>
+          <td>IT Support, Helpdesk, RCA</td>
+        </tr>
+        <tr>
+          <td><span class="fn-name">🎧 Cust. Service</span></td>
+          <td>Complaint response, case triage, cross-sell</td>
+          <td>Copilot for Service, Teams</td>
+          <td>Support Assistant, Cross-sell</td>
+        </tr>
+        <tr>
+          <td><span class="fn-name">⚙️ Operations</span></td>
+          <td>Planning, reporting, scheduling, PM workflows</td>
+          <td>Excel, Word, Teams, Planner</td>
+          <td>Custom via Studio</td>
+        </tr>
+      </tbody>
+    </table>
+    <span class="source-ref"><a href="https://adoption.microsoft.com/en-us/copilot-scenario-library/">adoption.microsoft.com/scenario-library</a></span>
+  </div>
+
+  <!-- ═══════ SLIDE 4: FINANCE DEEP DIVE ═══════ -->
+  <div class="slide" data-slide="4" style="background: radial-gradient(ellipse at 30% 50%, rgba(16,124,16,0.08) 0%, transparent 50%), linear-gradient(135deg, #0a0a14 0%, #111127 50%, #0a0a14 100%);">
+    <span class="slide-number">04</span>
+    <h2 class="grad-green">💰 Finance — From Month-End Close to Anomaly Detection</h2>
+    <p class="tagline">Risk management, procure-to-pay, record-to-report, and financial planning — all AI-assisted</p>
+    <div class="deep-grid cols-3">
+      <div class="deep-card" style="border-top: 3px solid #107C10;">
+        <div class="icon">📊</div>
+        <h4>Financial Analysis in Excel</h4>
+        <div class="sub">Copilot in Excel + Agent Mode</div>
+        <ul>
+          <li>Highlight cells where spend exceeds thresholds</li>
+          <li>Agent Mode builds exec summary dashboards</li>
+          <li>Variance analysis with natural language</li>
+          <li>Data visualization and forecasting</li>
+        </ul>
+        <div class="app-row"><span class="app-tag">Excel</span><span class="app-tag">Agent Mode</span></div>
+      </div>
+      <div class="deep-card" style="border-top: 3px solid #00B7C3;">
+        <div class="icon">🔍</div>
+        <h4>Spend Anomaly Detection</h4>
+        <div class="sub">Copilot Studio Agent</div>
+        <ul>
+          <li>Auto-detect suspicious vendor activity</li>
+          <li>Flag abnormal spending patterns</li>
+          <li>Identify duplicate invoices</li>
+          <li>AI-powered fraud detection logic</li>
+        </ul>
+        <div class="app-row"><span class="app-tag">Copilot Studio</span><span class="app-tag">Agent</span></div>
+      </div>
+      <div class="deep-card" style="border-top: 3px solid #7B83EB;">
+        <div class="icon">📋</div>
+        <h4>Guidance Doc Updates</h4>
+        <div class="sub">Teams → Excel → Word → Outlook</div>
+        <ul>
+          <li>Meeting Recap extracts change requirements</li>
+          <li>Locate latest RFx docs via Copilot Chat</li>
+          <li>Rewrite sections in Word with Copilot</li>
+          <li>Draft stakeholder emails via Outlook Coach</li>
+        </ul>
+        <div class="app-row"><span class="app-tag">Teams</span><span class="app-tag">Word</span><span class="app-tag">Outlook</span></div>
+      </div>
+    </div>
+    <span class="source-ref"><a href="https://adoption.microsoft.com/en-us/scenario-library/finance/">adoption.microsoft.com/scenario-library/finance</a></span>
+  </div>
+
+  <!-- ═══════ SLIDE 5: SALES DEEP DIVE ═══════ -->
+  <div class="slide" data-slide="5" style="background: radial-gradient(ellipse at 70% 40%, rgba(0,120,212,0.08) 0%, transparent 50%), linear-gradient(135deg, #0a0a14 0%, #111127 50%, #0a0a14 100%);">
+    <span class="slide-number">05</span>
+    <h2 class="grad-blue">📈 Sales — From Research to Close</h2>
+    <p class="tagline">79% of sellers spend 70% of time on admin. Copilot for Sales changes that.</p>
+    <div class="deep-grid cols-3">
+      <div class="deep-card" style="border-top: 3px solid #0078D4;">
+        <div class="icon">🎯</div>
+        <h4>Customer Research &amp; Pitches</h4>
+        <div class="sub">Copilot for Sales + PowerPoint</div>
+        <ul>
+          <li>Research customer context automatically</li>
+          <li>Generate tailored presentations</li>
+          <li>Personalized outreach with CRM data</li>
+          <li>Competitive intelligence briefs</li>
+        </ul>
+        <div class="app-row"><span class="app-tag">Copilot for Sales</span><span class="app-tag">PowerPoint</span></div>
+      </div>
+      <div class="deep-card" style="border-top: 3px solid #FF8C00;">
+        <div class="icon">📄</div>
+        <h4>RFP Response Agent</h4>
+        <div class="sub">Copilot Studio — Autonomous</div>
+        <ul>
+          <li>Auto-analyzes RFP requirements</li>
+          <li>Tailors proposals to customer details</li>
+          <li>Pulls from past winning proposals</li>
+          <li>Generates accurate, high-quality responses</li>
+        </ul>
+        <div class="app-row"><span class="app-tag">Copilot Studio</span><span class="app-tag">Agent</span></div>
+      </div>
+      <div class="deep-card" style="border-top: 3px solid #7B83EB;">
+        <div class="icon">🤝</div>
+        <h4>Meetings &amp; Follow-Up</h4>
+        <div class="sub">Teams + Outlook + Copilot Chat</div>
+        <ul>
+          <li>Meeting recap with action items</li>
+          <li>Auto-update CRM after calls</li>
+          <li>Draft follow-up emails with context</li>
+          <li>Sales conversation training agent</li>
+        </ul>
+        <div class="app-row"><span class="app-tag">Teams</span><span class="app-tag">Outlook</span><span class="app-tag">CRM</span></div>
+      </div>
+    </div>
+    <span class="source-ref"><a href="https://adoption.microsoft.com/en-us/scenario-library/sales/">adoption.microsoft.com/scenario-library/sales</a></span>
+  </div>
+
+  <!-- ═══════ SLIDE 6: LEGAL DEEP DIVE ═══════ -->
+  <div class="slide" data-slide="6" style="background: radial-gradient(ellipse at 40% 60%, rgba(123,131,235,0.08) 0%, transparent 50%), linear-gradient(135deg, #0a0a14 0%, #111127 50%, #0a0a14 100%);">
+    <span class="slide-number">06</span>
+    <h2 class="grad-purple">⚖️ Legal — From Contracts to IP Protection</h2>
+    <p class="tagline">Navigating legal complexity with AI-powered advisory, contract review, and litigation support</p>
+    <div class="deep-grid cols-3">
+      <div class="deep-card" style="border-top: 3px solid #7B83EB;">
+        <div class="icon">📋</div>
+        <h4>Advisory &amp; Compliance</h4>
+        <div class="sub">Copilot Chat + Word + PowerPoint</div>
+        <ul>
+          <li>Extract relevant case law precedents</li>
+          <li>Draft preliminary legal advice</li>
+          <li>Develop compliance training content</li>
+          <li>Recap legal consultations from Teams</li>
+        </ul>
+        <div class="app-row"><span class="app-tag">Copilot Chat</span><span class="app-tag">Word</span></div>
+      </div>
+      <div class="deep-card" style="border-top: 3px solid #00B7C3;">
+        <div class="icon">🛡️</div>
+        <h4>IP Protection Agent</h4>
+        <div class="sub">Copilot Studio — Autonomous</div>
+        <ul>
+          <li>Detect IP infringements automatically</li>
+          <li>Automate enforcement actions</li>
+          <li>Simplify IP registration lifecycle</li>
+          <li>Monitor filings and deadlines</li>
+        </ul>
+        <div class="app-row"><span class="app-tag">Copilot Studio</span><span class="app-tag">Agent</span></div>
+      </div>
+      <div class="deep-card" style="border-top: 3px solid #D13438;">
+        <div class="icon">⚔️</div>
+        <h4>Litigation &amp; Contracts</h4>
+        <div class="sub">Word + Copilot Chat + Studio</div>
+        <ul>
+          <li>Contract analysis and redlining</li>
+          <li>Research case precedents at speed</li>
+          <li>Generate contract summaries</li>
+          <li>Quicker legal guidance drafting</li>
+        </ul>
+        <div class="app-row"><span class="app-tag">Word</span><span class="app-tag">Copilot Chat</span></div>
+      </div>
+    </div>
+    <span class="source-ref"><a href="https://adoption.microsoft.com/en-us/scenario-library/legal/">adoption.microsoft.com/scenario-library/legal</a></span>
+  </div>
+
+  <!-- ═══════ SLIDE 7: MARKETING + HR + IT + CX ═══════ -->
+  <div class="slide" data-slide="7" style="background: radial-gradient(ellipse at 50% 50%, rgba(0,183,195,0.08) 0%, transparent 50%), linear-gradient(135deg, #0a0a14 0%, #111127 50%, #0a0a14 100%);">
+    <span class="slide-number">07</span>
+    <h2 class="grad-teal">🔌 4 More Departments Transformed by Copilot</h2>
+    <p class="tagline">Marketing, HR, IT, and Customer Service — each with dedicated scenarios, agents &amp; playbooks</p>
+    <div class="deep-grid cols-4">
+      <div class="deep-card" style="border-top: 3px solid #D13438;">
+        <div class="icon">📢</div>
+        <h4>Marketing</h4>
+        <div class="sub">Insights, Campaigns, Creative</div>
+        <ul>
+          <li>Market research &amp; strategy</li>
+          <li>Campaign execution workflows</li>
+          <li>Product feedback collection</li>
+          <li>Research Assistant Agent</li>
+        </ul>
+        <div class="app-row"><span class="app-tag">Word</span><span class="app-tag">PowerPoint</span><span class="app-tag">Studio</span></div>
+      </div>
+      <div class="deep-card" style="border-top: 3px solid #FFB900;">
+        <div class="icon">👥</div>
+        <h4>Human Resources</h4>
+        <div class="sub">Talent, L&amp;D, Recruiting</div>
+        <ul>
+          <li>Simplify job transitions</li>
+          <li>Manager insights &amp; coaching</li>
+          <li>Employee self-service agent</li>
+          <li>Benefits &amp; compensation help</li>
+        </ul>
+        <div class="app-row"><span class="app-tag">Teams</span><span class="app-tag">Word</span><span class="app-tag">Studio</span></div>
+      </div>
+      <div class="deep-card" style="border-top: 3px solid #00B7C3;">
+        <div class="icon">🖥️</div>
+        <h4>Information Technology</h4>
+        <div class="sub">Service Desk, Security, Change</div>
+        <ul>
+          <li>IT helpdesk &amp; support agents</li>
+          <li>Root cause analysis agent</li>
+          <li>Outage communications</li>
+          <li>Employee self-service for IT</li>
+        </ul>
+        <div class="app-row"><span class="app-tag">Security Copilot</span><span class="app-tag">Studio</span></div>
+      </div>
+      <div class="deep-card" style="border-top: 3px solid #107C10;">
+        <div class="icon">🎧</div>
+        <h4>Customer Service</h4>
+        <div class="sub">Resolution, Assignment, Diagnosis</div>
+        <ul>
+          <li>Complaint response workflows</li>
+          <li>Cross-sell/upsell agent</li>
+          <li>Support assistance agent</li>
+          <li>Case triage &amp; routing</li>
+        </ul>
+        <div class="app-row"><span class="app-tag">Copilot for Service</span><span class="app-tag">Studio</span></div>
+      </div>
+    </div>
+    <span class="source-ref"><a href="https://adoption.microsoft.com/en-us/copilot-scenario-library/">adoption.microsoft.com/scenario-library</a></span>
+  </div>
+
+  <!-- ═══════ SLIDE 8: HOW IT WORKS — ARCHITECTURE ═══════ -->
+  <div class="slide" data-slide="8" style="background: radial-gradient(ellipse at 50% 30%, rgba(255,185,0,0.08) 0%, transparent 50%), linear-gradient(135deg, #0a0a14 0%, #111127 50%, #0a0a14 100%);">
+    <span class="slide-number">08</span>
+    <h2 class="grad-gold">⚙️ The M365 Copilot Architecture</h2>
+    <p class="tagline">Work IQ + GPT-5 + Microsoft Graph + Copilot Studio = Enterprise AI at scale</p>
+    <div class="deep-grid cols-3">
+      <div class="deep-card" style="border-top: 3px solid #FFB900;">
+        <div class="icon">🧠</div>
+        <h4>Work IQ Layer</h4>
+        <ul>
+          <li>Your work data: emails, files, meetings, chats</li>
+          <li>Memory: learns your style &amp; habits</li>
+          <li>Inference: connects dots &amp; predicts next steps</li>
+          <li>Knows your org chart AND your work chart</li>
+        </ul>
+      </div>
+      <div class="deep-card" style="border-top: 3px solid #0078D4;">
+        <div class="icon">🔌</div>
+        <h4>5 Core Pillars</h4>
+        <ul>
+          <li><strong>Chat</strong> — Secure AI chat across all apps</li>
+          <li><strong>Search</strong> — AI-powered enterprise search</li>
+          <li><strong>Agents</strong> — Ready-to-use + custom agents</li>
+          <li><strong>Notebooks</strong> — Centralize &amp; analyze content</li>
+          <li><strong>Create</strong> — Generate designs, videos, surveys</li>
+        </ul>
+      </div>
+      <div class="deep-card" style="border-top: 3px solid #107C10;">
+        <div class="icon">🔐</div>
+        <h4>Security &amp; Governance</h4>
+        <ul>
+          <li>Data never trains foundation models</li>
+          <li>Inherits M365 permissions &amp; labels</li>
+          <li>Copilot Control System for IT oversight</li>
+          <li>100+ data connectors with governed access</li>
+          <li>Trusted by Dow, Vodafone, Estée Lauder</li>
+        </ul>
+      </div>
+    </div>
+    <span class="source-ref"><a href="https://www.microsoft.com/en-us/microsoft-365/copilot">microsoft.com/microsoft-365/copilot — Work IQ</a></span>
+  </div>
+
+  <!-- ═══════ SLIDE 9: PRICING ═══════ -->
+  <div class="slide" data-slide="9" style="background: radial-gradient(ellipse at 60% 50%, rgba(0,120,212,0.08) 0%, transparent 50%), linear-gradient(135deg, #0a0a14 0%, #111127 50%, #0a0a14 100%);">
+    <span class="slide-number">09</span>
+    <h2 class="grad-blue">💸 M365 Copilot Pricing — The Enterprise Play</h2>
+    <p class="tagline">Add-on to your existing M365 subscription. Includes ALL apps + Copilot Studio</p>
+    <div class="deep-grid cols-3">
+      <div class="deep-card" style="border-top: 3px solid #0078D4; text-align: center;">
+        <div style="font-size: 56px; font-weight: 900; color: #0078D4; font-family: 'JetBrains Mono', monospace;">$18</div>
+        <div style="font-size: 13px; color: rgba(255,255,255,0.4); margin-bottom: 14px;">/user/month — Copilot Business</div>
+        <ul>
+          <li>Copilot in Word, Excel, PPT, Outlook, Teams</li>
+          <li>Copilot Chat with work &amp; web data</li>
+          <li>100+ data connectors</li>
+          <li>Copilot Studio agent building</li>
+          <li>SharePoint Advanced Management</li>
+          <li>Copilot Analytics for ROI tracking</li>
+        </ul>
+      </div>
+      <div class="deep-card" style="border-top: 3px solid #7B83EB; text-align: center;">
+        <div style="font-size: 56px; font-weight: 900; color: #7B83EB; font-family: 'JetBrains Mono', monospace;">$0</div>
+        <div style="font-size: 13px; color: rgba(255,255,255,0.4); margin-bottom: 14px;">Copilot Chat — Free tier</div>
+        <ul>
+          <li>Secure AI chat (web + work toggle)</li>
+          <li>Web-grounded answers</li>
+          <li>Enterprise data protection</li>
+          <li>Pay-as-you-go agents (metered)</li>
+          <li>Great starting point for evaluation</li>
+          <li style="color: rgba(255,255,255,0.3);">No app integration (Word, Excel, etc.)</li>
+        </ul>
+      </div>
+      <div class="deep-card" style="border-top: 3px solid rgba(255,255,255,0.2); text-align: center;">
+        <div style="font-size: 56px; font-weight: 900; color: rgba(255,255,255,0.3); font-family: 'JetBrains Mono', monospace;">$30+</div>
+        <div style="font-size: 13px; color: rgba(255,255,255,0.4); margin-bottom: 14px;">/user/month — Copilot for Sales/Service</div>
+        <ul>
+          <li style="color: rgba(255,255,255,0.4);">Role-specific agents</li>
+          <li style="color: rgba(255,255,255,0.4);">CRM integration (Dynamics/Salesforce)</li>
+          <li style="color: rgba(255,255,255,0.4);">Meeting recaps with CRM context</li>
+          <li style="color: rgba(255,255,255,0.4);">Customer sentiment analysis</li>
+          <li style="color: rgba(255,255,255,0.4);">Auto-generated case summaries</li>
+          <li style="color: rgba(255,255,255,0.4);">Requires M365 Copilot base</li>
+        </ul>
+      </div>
+    </div>
+    <span class="source-ref"><a href="https://www.microsoft.com/en-us/microsoft-365/business/copilot-for-microsoft-365">microsoft.com — M365 Copilot pricing</a></span>
+  </div>
+
+  <!-- ═══════ SLIDE 10: VS CLAUDE COWORK ═══════ -->
+  <div class="slide" data-slide="10" style="background: radial-gradient(ellipse at 50% 50%, rgba(209,52,56,0.08) 0%, transparent 50%), linear-gradient(135deg, #0a0a14 0%, #111127 50%, #0a0a14 100%);">
+    <span class="slide-number">10</span>
+    <h2 class="grad-red">⚔️ M365 Copilot vs Claude Cowork — How They Compare</h2>
+    <p class="tagline">Two fundamentally different approaches to enterprise AI</p>
+    <div class="insight-cards">
+      <div class="insight-card pro">
+        <h4>✅ M365 Copilot: Ecosystem Moat</h4>
+        <p>Already embedded in Word, Excel, PowerPoint, Teams, Outlook — apps that 400M+ people use daily. Zero new tools to learn. Works with existing Microsoft Graph data, permissions, and compliance infrastructure.</p>
+      </div>
+      <div class="insight-card con">
+        <h4>⚡ Claude Cowork: Deeper Autonomy</h4>
+        <p>Runs in an isolated VM with file access, sub-agent orchestration, and long-running tasks. Slash commands like <code>/sox-testing</code> and <code>/review-contract</code> feel more like a specialist colleague than an assistant.</p>
+      </div>
+      <div class="insight-card pro">
+        <h4>✅ M365: Enterprise Governance</h4>
+        <p>Inherits sensitivity labels, DLP policies, retention rules, eDiscovery. Copilot Control System gives IT granular oversight. SOC 2, ISO 27001, FedRAMP. Enterprises trust Microsoft's compliance stack.</p>
+      </div>
+      <div class="insight-card con">
+        <h4>⚡ Claude: MCP + Open Source</h4>
+        <p>Every Cowork plugin is open source on GitHub. MCP protocol connects to any tool. $20/mo for Pro vs $18/user/mo for M365 Copilot, but Cowork doesn't require a Microsoft subscription underneath.</p>
+      </div>
+      <div class="insight-card pro">
+        <h4>✅ M365: Copilot Studio = Custom Agents</h4>
+        <p>No-code agent builder with 100+ connectors. Deploy agents to Teams, web, SharePoint. 79% of SMBs plan to implement agents within 18 months. Agent Store with Microsoft and partner agents.</p>
+      </div>
+      <div class="insight-card con">
+        <h4>⚡ Claude: Specialist Depth</h4>
+        <p>The Finance plugin does journal entries, SOX workpapers, and variance analysis at a depth M365 Copilot doesn't match out-of-box. Legal plugin's contract review with RED/YELLOW/GREEN flags is unmatched.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ SLIDE 11: WHO SHOULD USE WHAT ═══════ -->
+  <div class="slide" data-slide="11" style="background: radial-gradient(ellipse at 50% 50%, rgba(123,131,235,0.08) 0%, transparent 50%), linear-gradient(135deg, #0a0a14 0%, #111127 50%, #0a0a14 100%);">
+    <span class="slide-number">11</span>
+    <h2 class="grad-purple">🎯 The Verdict: Who Should Use What?</h2>
+    <p class="tagline">It's not either/or — it's about your existing stack and what you need</p>
+    <div class="verdict-boxes">
+      <div class="verdict-box" style="border: 1px solid rgba(0,120,212,0.3);">
+        <div class="emoji">🏢</div>
+        <h4 style="color: #7BBBF5;">Choose M365 Copilot If...</h4>
+        <p>You're a Microsoft shop (Office, Teams, SharePoint). Need enterprise governance, compliance &amp; IT controls. Want AI embedded in apps teams already use. Building custom agents with Copilot Studio.</p>
+      </div>
+      <div class="verdict-box" style="border: 1px solid rgba(209,52,56,0.3);">
+        <div class="emoji">🧠</div>
+        <h4 style="color: #fca5a5;">Choose Claude Cowork If...</h4>
+        <p>You need deep domain specialist AI (finance, legal, data). Want open-source plugins &amp; MCP extensibility. Prefer autonomous multi-agent workflows. Need local file access &amp; long-running tasks.</p>
+      </div>
+      <div class="verdict-box" style="border: 1px solid rgba(16,185,129,0.3);">
+        <div class="emoji">🤝</div>
+        <h4 style="color: #6ee7b7;">Use Both If...</h4>
+        <p>M365 Copilot for daily productivity (email, docs, meetings) + Claude Cowork for deep specialist work (SOX audits, contract review, data analysis). They complement, not compete.</p>
+      </div>
+    </div>
+    <div style="margin-top: 28px; max-width: 700px; text-align: center;">
+      <p style="font-size: 18px; color: rgba(255,255,255,0.6); line-height: 1.6; font-style: italic;">"The future isn't one AI to rule them all — it's the right AI for the right task, in the right workflow."</p>
+    </div>
+  </div>
+
+  <!-- ═══════ SLIDE 12: CTA ═══════ -->
+  <div class="slide" data-slide="12" style="background: radial-gradient(ellipse at 50% 40%, rgba(0,120,212,0.12) 0%, transparent 50%), radial-gradient(ellipse at 30% 80%, rgba(123,131,235,0.08) 0%, transparent 50%), linear-gradient(135deg, #0a0a14 0%, #111127 50%, #0a0a14 100%);">
+    <span class="slide-number">12</span>
+    <h2 class="grad-gold" style="font-size: 52px;">Start With the Scenario Library</h2>
+    <p class="tagline" style="max-width: 600px;">100+ real-world scenarios with step-by-step playbooks. Find your department. Follow the guide. Transform your workflow.</p>
+    <div style="display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px;">
+      <a href="https://adoption.microsoft.com/en-us/copilot-scenario-library/" style="padding: 14px 32px; background: linear-gradient(135deg, #0078D4, #00B7C3); border-radius: 14px; color: #fff; text-decoration: none; font-weight: 700; font-size: 15px;">📚 Scenario Library</a>
+      <a href="https://m365copilot.com/" style="padding: 14px 32px; background: linear-gradient(135deg, #FFB900, #FF8C00); border-radius: 14px; color: #0a0a14; text-decoration: none; font-weight: 700; font-size: 15px;">⚡ Try Copilot Chat Free</a>
+      <a href="https://www.microsoft.com/en-us/microsoft-365/business/copilot-for-microsoft-365" style="padding: 14px 32px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; color: #fff; text-decoration: none; font-weight: 700; font-size: 15px;">💰 See Pricing</a>
+    </div>
+    <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 12px;">
+      <a href="https://adoption.microsoft.com/en-us/scenario-library/finance/" style="padding: 8px 16px; background: rgba(16,124,16,0.1); border: 1px solid rgba(16,124,16,0.2); border-radius: 10px; color: #6ee7b7; text-decoration: none; font-size: 13px;">💰 Finance</a>
+      <a href="https://adoption.microsoft.com/en-us/scenario-library/sales/" style="padding: 8px 16px; background: rgba(0,120,212,0.1); border: 1px solid rgba(0,120,212,0.2); border-radius: 10px; color: #7BBBF5; text-decoration: none; font-size: 13px;">📈 Sales</a>
+      <a href="https://adoption.microsoft.com/en-us/scenario-library/legal/" style="padding: 8px 16px; background: rgba(123,131,235,0.1); border: 1px solid rgba(123,131,235,0.2); border-radius: 10px; color: #c4b5fd; text-decoration: none; font-size: 13px;">⚖️ Legal</a>
+      <a href="https://adoption.microsoft.com/en-us/scenario-library/marketing/" style="padding: 8px 16px; background: rgba(209,52,56,0.1); border: 1px solid rgba(209,52,56,0.2); border-radius: 10px; color: #fca5a5; text-decoration: none; font-size: 13px;">📢 Marketing</a>
+      <a href="https://adoption.microsoft.com/en-us/scenario-library/human-resources/" style="padding: 8px 16px; background: rgba(255,185,0,0.1); border: 1px solid rgba(255,185,0,0.2); border-radius: 10px; color: #fcd34d; text-decoration: none; font-size: 13px;">👥 HR</a>
+      <a href="https://adoption.microsoft.com/en-us/scenario-library/information-technology/" style="padding: 8px 16px; background: rgba(0,183,195,0.1); border: 1px solid rgba(0,183,195,0.2); border-radius: 10px; color: #67e8f9; text-decoration: none; font-size: 13px;">🖥️ IT</a>
+    </div>
+    <div style="margin-top: 24px; padding: 14px 28px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; text-align: center;">
+      <p style="font-size: 14px; color: rgba(255,255,255,0.5);">📺 <strong style="color: #fff;">Like this breakdown?</strong> — Hit 👍 Subscribe 🔔 and drop your take: <span style="color: #7BBBF5;">M365 Copilot or Claude Cowork — which wins for your team?</span></p>
+    </div>
+    <span class="source-ref"><a href="https://adoption.microsoft.com/en-us/copilot-scenario-library/">adoption.microsoft.com/scenario-library</a></span>
+  </div>
+
+</div>
+
+<!-- Navigation -->
+<div class="nav-controls">
+  <button class="nav-btn" onclick="changeSlide(-1)">&#9664;</button>
+  <div class="progress-dots" id="dots"></div>
+  <span class="slide-counter" id="counter">1 / 12</span>
+  <button class="nav-btn" onclick="changeSlide(1)">&#9654;</button>
+</div>
+
+<script>
+  let cur = 1;
+  const total = 12;
+  const dots = document.getElementById('dots');
+  for (let i = 1; i <= total; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 1 ? ' active' : '');
+    d.onclick = () => go(i);
+    dots.appendChild(d);
+  }
+  function go(n) {
+    document.querySelector('.slide[data-slide="' + cur + '"]').classList.remove('active');
+    cur = n;
+    document.querySelector('.slide[data-slide="' + cur + '"]').classList.add('active');
+    document.getElementById('counter').textContent = cur + ' / ' + total;
+    document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i + 1 === cur));
+  }
+  function changeSlide(dir) {
+    let n = cur + dir;
+    if (n < 1) n = total;
+    if (n > total) n = 1;
+    go(n);
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); changeSlide(1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); changeSlide(-1); }
+  });
+</script>
+
+</body>
+</html>
