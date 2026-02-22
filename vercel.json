@@ -1,0 +1,8 @@
+{
+  "buildCommand": "cd megaagentai && npm install && npm run build",
+  "outputDirectory": "megaagentai/dist",
+  "framework": "vite",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
