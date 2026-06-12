@@ -201,6 +201,33 @@ class AmazonTopSellersResponse(BaseModel):
     warning: Optional[str] = None
 
 
+class StorefrontScrapeRequest(BaseModel):
+    store_url: str = Field(..., description="Seller storefront/search URL")
+    max_brands: int = Field(20, ge=1, le=100)
+    max_products: int = Field(50, ge=1, le=200)
+    max_pages: int = Field(1, ge=1, le=10)
+
+
+class StorefrontScrapePageStat(BaseModel):
+    page_number: int
+    page_url: str
+    new_products_added: int
+    new_brands_added: int
+
+
+class StorefrontScrapeResponse(BaseModel):
+    store_url: str
+    brands: List[str]
+    products: List[str]
+    brand_count: int
+    product_count: int
+    warning: Optional[str] = None
+    visited_urls: List[str] = []
+    page_stats: List[StorefrontScrapePageStat] = []
+    stopped_at_page: Optional[int] = None
+    stop_reason: Optional[str] = None
+
+
 class BrandSetInput(BaseModel):
     source_type: BrandSourceType
     category: str
