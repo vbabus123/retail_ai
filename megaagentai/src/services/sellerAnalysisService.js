@@ -12,8 +12,10 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-// Local scraper server URL
-const SCRAPER_URL = 'http://localhost:3001';
+// Scraper server URL:
+// - local dev: defaults to http://localhost:3001
+// - deployed frontend (Vercel): set VITE_SCRAPER_URL to your deployed scraper API
+const SCRAPER_URL = import.meta.env.VITE_SCRAPER_URL || 'http://localhost:3001';
 
 // ── Check if local scraper server is running ────────────────────────
 async function isScraperServerUp() {
@@ -355,7 +357,7 @@ async function fetchAllSellerProducts(sellerUrl, onProgress) {
       console.warn('Scraper server call failed:', err.message);
     }
   } else {
-    console.log('ℹ Local scraper server not running (start with: node server/scraper.js)');
+    console.log(`ℹ Scraper server not reachable at ${SCRAPER_URL}`);
   }
 
   // ── Strategy 2: CORS proxies (legacy) ─────────────────────────
@@ -395,7 +397,9 @@ async function fetchAllSellerProducts(sellerUrl, onProgress) {
     }
     
     throw new Error(
-      'Could not fetch seller data. Start the scraper server with: node server/scraper.js\n' +
+      `Could not fetch seller data. Scraper API is unreachable at ${SCRAPER_URL}. ` +
+      'For local testing start: node server/scraper.js. ' +
+      'For deployed frontend set VITE_SCRAPER_URL to a live scraper API URL. ' +
       'Or use the "Paste HTML" option below.'
     );
   }
