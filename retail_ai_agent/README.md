@@ -172,6 +172,25 @@ Returns:
 - stop diagnostics (`stopped_at_page`, `stop_reason`)
 - warning when storefront has bot protection/limited extraction
 
+### Get top selling brands from seller (with ratings & reviews)
+`POST /api/v1/brands/seller/top-brands`
+
+```json
+{
+  "store_url": "https://www.amazon.com/s?ie=UTF8&marketplaceID=ATVPDKIKX0DER&me=ASSKFE9KVAV03",
+  "max_brands": 20,
+  "max_pages": 3
+}
+```
+
+Returns:
+- top brands ranked by engagement_score (rating * review_count)
+- product_count per brand
+- avg_rating
+- total_reviews and avg_reviews_per_product
+- total_products_analyzed
+- total_unique_brands
+
 ### Compare brand diff between 2 sources
 `POST /api/v1/brands/diff`
 
