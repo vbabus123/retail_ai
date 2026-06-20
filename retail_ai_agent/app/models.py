@@ -201,6 +201,33 @@ class AmazonTopSellersResponse(BaseModel):
     warning: Optional[str] = None
 
 
+class StorefrontScrapeRequest(BaseModel):
+    store_url: str = Field(..., description="Seller storefront/search URL")
+    max_brands: int = Field(20, ge=1, le=100)
+    max_products: int = Field(50, ge=1, le=200)
+    max_pages: int = Field(1, ge=1, le=10)
+
+
+class StorefrontScrapePageStat(BaseModel):
+    page_number: int
+    page_url: str
+    new_products_added: int
+    new_brands_added: int
+
+
+class StorefrontScrapeResponse(BaseModel):
+    store_url: str
+    brands: List[str]
+    products: List[str]
+    brand_count: int
+    product_count: int
+    warning: Optional[str] = None
+    visited_urls: List[str] = []
+    page_stats: List[StorefrontScrapePageStat] = []
+    stopped_at_page: Optional[int] = None
+    stop_reason: Optional[str] = None
+
+
 class BrandSetInput(BaseModel):
     source_type: BrandSourceType
     category: str
@@ -242,3 +269,51 @@ class RetailerBrandDiffRequest(BaseModel):
     category: str
     retailer_a: Marketplace
     retailer_b: Marketplace
+
+
+class SellerBrandMetric(BaseModel):
+    rank: int
+    brand: str
+    product_count: int
+    avg_rating: float
+    total_reviews: int
+    avg_reviews_per_product: float
+    avg_price: Optional[float] = None
+    top_demand_product: Optional[str] = None
+    max_bought_in_month: Optional[int] = None
+    engagement_score: float
+    demand_score: float
+
+
+class TopSellerBrandsRequest(BaseModel):
+    store_url: str = Field(..., description="Seller storefront/search URL")
+    max_brands: int = Field(20, ge=1, le=100)
+    max_pages: int = Field(2, ge=1, le=10)
+    include_audit: bool = Field(True, description="Include product-level evidence for each returned brand")
+
+
+class SellerBrandAuditProduct(BaseModel):
+    title: str
+    rating: float
+    reviews: int
+    price: Optional[float] = None
+    bought_in_past_month: Optional[int] = None
+    page_number: int
+    page_url: str
+    asin: Optional[str] = None
+
+
+class SellerBrandAudit(BaseModel):
+    brand: str
+    product_count: int
+    total_reviews: int
+    products: List[SellerBrandAuditProduct]
+
+
+class TopSellerBrandsResponse(BaseModel):
+    store_url: str
+    top_brands: List[SellerBrandMetric]
+    total_products_analyzed: int
+    total_unique_brands: int
+    warning: Optional[str] = None
+    brand_audit: List[SellerBrandAudit] = []

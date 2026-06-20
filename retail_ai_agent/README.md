@@ -166,6 +166,45 @@ Returns top brand candidates extracted from Amazon category search results.
 
 Returns top brand candidates extracted from the Amazon Best Sellers category page.
 
+### Scrape seller storefront (brands + product titles)
+`POST /api/v1/brands/storefront/scrape`
+
+```json
+{
+  "store_url": "https://www.amazon.com/s?ie=UTF8&marketplaceID=ATVPDKIKX0DER&me=ASSKFE9KVAV03",
+  "max_brands": 20,
+  "max_products": 50,
+  "max_pages": 2
+}
+```
+
+Returns:
+- ranked brand list
+- product title list
+- visited URLs across pages
+- page-wise counts of newly added products/brands
+- stop diagnostics (`stopped_at_page`, `stop_reason`)
+- warning when storefront has bot protection/limited extraction
+
+### Get top selling brands from seller (with ratings & reviews)
+`POST /api/v1/brands/seller/top-brands`
+
+```json
+{
+  "store_url": "https://www.amazon.com/s?ie=UTF8&marketplaceID=ATVPDKIKX0DER&me=ASSKFE9KVAV03",
+  "max_brands": 20,
+  "max_pages": 3
+}
+```
+
+Returns:
+- top brands ranked by engagement_score (rating * review_count)
+- product_count per brand
+- avg_rating
+- total_reviews and avg_reviews_per_product
+- total_products_analyzed
+- total_unique_brands
+
 ### Compare brand diff between 2 sources
 `POST /api/v1/brands/diff`
 

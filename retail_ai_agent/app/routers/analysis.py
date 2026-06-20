@@ -18,6 +18,10 @@ from app.models import (
     SentimentRequest,
     SentimentResponse,
     SellerBrandDiffRequest,
+    StorefrontScrapeRequest,
+    StorefrontScrapeResponse,
+    TopSellerBrandsRequest,
+    TopSellerBrandsResponse,
     RetailerBrandDiffRequest,
     TopSellersRequest,
     TopSellersResponse,
@@ -30,6 +34,8 @@ from app.services.brand_compare import (
     compare_seller_brand_diff,
     scrape_amazon_top_brands,
     scrape_amazon_best_sellers_brands,
+    scrape_storefront_catalog,
+    scrape_seller_top_brands,
 )
 from app.services.comparison import compare_sellers, competitor_insights, marketplace_gap, top_sellers
 from app.services.llm import llm_service
@@ -125,6 +131,28 @@ async def get_amazon_best_sellers_brands(payload: AmazonTopSellersRequest) -> Am
     )
 
 
+@router.post("/brands/storefront/scrape", response_model=StorefrontScrapeResponse)
+async def scrape_seller_storefront(payload: StorefrontScrapeRequest) -> StorefrontScrapeResponse:
+    brands, products, warning, metadata = await scrape_storefront_catalog(
+        payload.store_url,
+        max_brands=payload.max_brands,
+        max_products=payload.max_products,
+        max_pages=payload.max_pages,
+    )
+    return StorefrontScrapeResponse(
+        store_url=payload.store_url,
+        brands=brands,
+        products=products,
+        brand_count=len(brands),
+        product_count=len(products),
+        warning=warning,
+        visited_urls=metadata["visited_urls"],
+        page_stats=metadata["page_stats"],
+        stopped_at_page=metadata["stopped_at_page"],
+        stop_reason=metadata["stop_reason"],
+    )
+
+
 @router.post("/brands/diff", response_model=BrandDiffResponse)
 async def get_brand_diff(payload: BrandDiffRequest) -> BrandDiffResponse:
     try:
@@ -158,3 +186,20 @@ async def get_retailer_brand_diff(payload: RetailerBrandDiffRequest) -> BrandDif
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/brands/seller/top-brands", response_model=TopSellerBrandsResponse)
+async def get_seller_top_brands(payload: TopSellerBrandsRequest) -> TopSellerBrandsResponse:
+    top_brands, total_products, unique_brands, warning, brand_audit = await scrape_seller_top_brands(
+        payload.store_url,
+        max_brands=payload.max_brands,
+        max_pages=payload.max_pages,
+    )
+    return TopSellerBrandsResponse(
+        store_url=payload.store_url,
+        top_brands=top_brands,
+        total_products_analyzed=total_products,
+        total_unique_brands=unique_brands,
+        warning=warning,
+        brand_audit=brand_audit if payload.include_audit else [],
+    )
