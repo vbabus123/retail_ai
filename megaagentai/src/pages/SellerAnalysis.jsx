@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { analyzeSellerStore, analyzeFromHtml } from '../services/sellerAnalysisService';
 import '../styles/theme.css';
@@ -12,6 +12,237 @@ const SellerAnalysis = () => {
   const [expandedItems, setExpandedItems] = useState({});
   const [showHtmlInput, setShowHtmlInput] = useState(false);
   const [pastedHtml, setPastedHtml] = useState('');
+  const [topBrandSortBy, setTopBrandSortBy] = useState('engagement');
+
+  const escapeCsvValue = useCallback((value) => {
+    const str = String(value ?? '');
+    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  }, []);
+
+  const topBrands = useMemo(() => {
+    if (!results?.products?.length) {
+      return [];
+    }
+
+    const parseReviews = (value) => {
+      if (typeof value === 'number') {
+        return Number.isFinite(value) ? value : 0;
+      }
+      if (typeof value !== 'string') {
+        return 0;
+      }
+      const cleaned = value.replace(/,/g, '').trim();
+      const kMatch = cleaned.match(/(\d+(?:\.\d+)?)\s*K/i);
+      if (kMatch) {
+        return Math.round(parseFloat(kMatch[1]) * 1000);
+      }
+      const numMatch = cleaned.match(/\d+/);
+      return numMatch ? parseInt(numMatch[0], 10) : 0;
+    };
+
+    const normalizeBrand = (brand) => {
+      const value = String(brand || '').trim();
+      return value ? value : 'Unknown';
+    };
+
+    const byBrand = new Map();
+    for (const product of results.products) {
+      const brand = normalizeBrand(product.brand);
+      const row = byBrand.get(brand) || {
+        brand,
+        productCount: 0,
+        ratings: [],
+        totalReviews: 0,
+        topProduct: null,
+        topProductReviews: 0,
+      };
+
+      row.productCount += 1;
+
+      const rating = typeof product.rating === 'number' ? product.rating : null;
+      if (rating && Number.isFinite(rating) && rating > 0) {
+        row.ratings.push(rating);
+      }
+
+      const reviews = parseReviews(product.reviewCount);
+      row.totalReviews += reviews;
+      if (reviews > row.topProductReviews) {
+        row.topProductReviews = reviews;
+        row.topProduct = product.name;
+      }
+
+      byBrand.set(brand, row);
+    }
+
+    const ranked = Array.from(byBrand.values()).map((row) => {
+      const avgRating = row.ratings.length > 0
+        ? row.ratings.reduce((sum, val) => sum + val, 0) / row.ratings.length
+        : 0;
+      const avgReviewsPerProduct = row.productCount > 0 ? row.totalReviews / row.productCount : 0;
+      const engagementScore = avgRating * (avgReviewsPerProduct / 100 + 1);
+      return {
+        brand: row.brand,
+        productCount: row.productCount,
+        avgRating,
+        totalReviews: row.totalReviews,
+        avgReviewsPerProduct,
+        engagementScore,
+        topProduct: row.topProduct,
+      };
+    });
+
+    ranked.sort((a, b) => {
+      if (topBrandSortBy === 'products') {
+        if (b.productCount !== a.productCount) {
+          return b.productCount - a.productCount;
+        }
+        if (b.totalReviews !== a.totalReviews) {
+          return b.totalReviews - a.totalReviews;
+        }
+        return b.engagementScore - a.engagementScore;
+      }
+
+      if (topBrandSortBy === 'reviews') {
+        if (b.totalReviews !== a.totalReviews) {
+          return b.totalReviews - a.totalReviews;
+        }
+        if (b.productCount !== a.productCount) {
+          return b.productCount - a.productCount;
+        }
+        return b.engagementScore - a.engagementScore;
+      }
+
+      if (topBrandSortBy === 'rating') {
+        if (b.avgRating !== a.avgRating) {
+          return b.avgRating - a.avgRating;
+        }
+        if (b.totalReviews !== a.totalReviews) {
+          return b.totalReviews - a.totalReviews;
+        }
+        return b.engagementScore - a.engagementScore;
+      }
+
+      if (b.engagementScore !== a.engagementScore) {
+        return b.engagementScore - a.engagementScore;
+      }
+      if (b.productCount !== a.productCount) {
+        return b.productCount - a.productCount;
+      }
+      return b.totalReviews - a.totalReviews;
+    });
+
+    return ranked.slice(0, 10).map((item, idx) => ({
+      ...item,
+      rank: idx + 1,
+    }));
+  }, [results, topBrandSortBy]);
+
+  const exportTopBrandsCsv = useCallback(() => {
+    if (!topBrands.length) {
+      return;
+    }
+
+    const rows = [
+      [
+        'rank',
+        'brand',
+        'product_count',
+        'avg_rating',
+        'total_reviews',
+        'avg_reviews_per_product',
+        'engagement_score',
+        'top_product_signal',
+        'seller_url',
+      ],
+      ...topBrands.map((brand) => [
+        brand.rank,
+        brand.brand,
+        brand.productCount,
+        brand.avgRating ? brand.avgRating.toFixed(2) : '',
+        brand.totalReviews,
+        brand.avgReviewsPerProduct.toFixed(2),
+        brand.engagementScore.toFixed(2),
+        brand.topProduct || '',
+        sellerUrl || '',
+      ]),
+    ];
+
+    const csv = rows
+      .map((row) => row.map(escapeCsvValue).join(','))
+      .join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const fileName = `top-brands-${(results?.sellerInfo?.name || 'seller').replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.csv`;
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+  }, [topBrands, sellerUrl, results, escapeCsvValue]);
+
+  const exportAllProductsCsv = useCallback(() => {
+    if (!results?.products?.length) {
+      return;
+    }
+
+    const rows = [
+      [
+        'seller_name',
+        'seller_url',
+        'product_name',
+        'brand',
+        'category',
+        'price',
+        'price_numeric',
+        'rating',
+        'review_count',
+        'asin',
+        'product_url',
+        'offer_density',
+        'has_best_offer',
+        'is_incremental',
+        'sentiment_score',
+        'sentiment_summary',
+      ],
+      ...results.products.map((product) => [
+        results?.sellerInfo?.name || '',
+        sellerUrl || '',
+        product.name || '',
+        product.brand || '',
+        product.category || '',
+        product.price || '',
+        product.priceNumeric ?? '',
+        product.rating ?? '',
+        product.reviewCount ?? '',
+        product.asin || '',
+        product.productUrl || '',
+        product.offerDensity ?? '',
+        product.hasBestOffer ?? '',
+        product.isIncremental ?? '',
+        product.sentiment?.score ?? '',
+        product.sentiment?.summary || '',
+      ]),
+    ];
+
+    const csv = rows
+      .map((row) => row.map(escapeCsvValue).join(','))
+      .join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const fileName = `all-products-${(results?.sellerInfo?.name || 'seller').replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.csv`;
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+  }, [results, sellerUrl, escapeCsvValue]);
 
   const handleAnalyze = useCallback(async () => {
     if (!sellerUrl.trim()) {
@@ -544,6 +775,137 @@ const SellerAnalysis = () => {
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* Top Brands Ranking */}
+            {topBrands.length > 0 && (
+              <div style={{
+                background: 'rgba(30, 41, 59, 0.8)',
+                borderRadius: '16px',
+                padding: '1.5rem',
+                marginBottom: '2rem',
+                border: '1px solid rgba(59, 130, 246, 0.25)'
+              }}>
+                <h2 style={{
+                  fontSize: '1.25rem',
+                  fontWeight: 600,
+                  marginBottom: '0.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}>
+                  🏆 Top Brands (Ranked)
+                </h2>
+                <p style={{ color: '#9ca3af', fontSize: '0.85rem', marginBottom: '1rem' }}>
+                  Ranking formula: Engagement Score = Avg Rating × (Avg Reviews per Product / 100 + 1)
+                </p>
+
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: '1rem',
+                  marginBottom: '1rem',
+                  flexWrap: 'wrap'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <label style={{ color: '#9ca3af', fontSize: '0.85rem' }}>Sort by</label>
+                    <select
+                      value={topBrandSortBy}
+                      onChange={(e) => setTopBrandSortBy(e.target.value)}
+                      style={{
+                        padding: '0.5rem 0.75rem',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(99, 102, 241, 0.35)',
+                        background: 'rgba(15, 23, 42, 0.85)',
+                        color: '#e5e7eb',
+                        fontSize: '0.85rem'
+                      }}
+                    >
+                      <option value="engagement">Engagement Score</option>
+                      <option value="products">Product Count</option>
+                      <option value="reviews">Total Reviews</option>
+                      <option value="rating">Average Rating</option>
+                    </select>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                    <button
+                      onClick={exportTopBrandsCsv}
+                      style={{
+                        padding: '0.55rem 0.9rem',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(16, 185, 129, 0.4)',
+                        background: 'rgba(16, 185, 129, 0.12)',
+                        color: '#34d399',
+                        fontWeight: 600,
+                        fontSize: '0.85rem',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      ⬇ Export Top Brands CSV
+                    </button>
+                    <button
+                      onClick={exportAllProductsCsv}
+                      style={{
+                        padding: '0.55rem 0.9rem',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(96, 165, 250, 0.4)',
+                        background: 'rgba(96, 165, 250, 0.12)',
+                        color: '#93c5fd',
+                        fontWeight: 600,
+                        fontSize: '0.85rem',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      ⬇ Export All Products CSV
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid rgba(99, 102, 241, 0.2)' }}>
+                        <th style={{ padding: '0.75rem', textAlign: 'center', color: '#9ca3af', fontWeight: 500 }}>Rank</th>
+                        <th style={{ padding: '0.75rem', textAlign: 'left', color: '#9ca3af', fontWeight: 500 }}>Brand</th>
+                        <th style={{ padding: '0.75rem', textAlign: 'center', color: '#9ca3af', fontWeight: 500 }}>Products</th>
+                        <th style={{ padding: '0.75rem', textAlign: 'center', color: '#9ca3af', fontWeight: 500 }}>Avg Rating</th>
+                        <th style={{ padding: '0.75rem', textAlign: 'center', color: '#9ca3af', fontWeight: 500 }}>Total Reviews</th>
+                        <th style={{ padding: '0.75rem', textAlign: 'center', color: '#9ca3af', fontWeight: 500 }}>Engagement</th>
+                        <th style={{ padding: '0.75rem', textAlign: 'left', color: '#9ca3af', fontWeight: 500 }}>Top Product Signal</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {topBrands.map((brand) => (
+                        <tr key={brand.brand} style={{ borderBottom: '1px solid rgba(99, 102, 241, 0.08)' }}>
+                          <td style={{ padding: '0.75rem', textAlign: 'center' }}>
+                            <span style={{
+                              display: 'inline-flex',
+                              minWidth: '28px',
+                              height: '28px',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              borderRadius: '999px',
+                              background: brand.rank <= 3 ? 'rgba(250, 204, 21, 0.2)' : 'rgba(99, 102, 241, 0.18)',
+                              color: brand.rank <= 3 ? '#facc15' : '#a5b4fc',
+                              fontWeight: 700
+                            }}>
+                              {brand.rank}
+                            </span>
+                          </td>
+                          <td style={{ padding: '0.75rem', fontWeight: 600, color: '#e5e7eb' }}>{brand.brand}</td>
+                          <td style={{ padding: '0.75rem', textAlign: 'center', color: '#c4b5fd' }}>{brand.productCount}</td>
+                          <td style={{ padding: '0.75rem', textAlign: 'center', color: '#86efac' }}>{brand.avgRating ? brand.avgRating.toFixed(2) : 'N/A'}</td>
+                          <td style={{ padding: '0.75rem', textAlign: 'center', color: '#fca5a5' }}>{brand.totalReviews.toLocaleString()}</td>
+                          <td style={{ padding: '0.75rem', textAlign: 'center', fontWeight: 700, color: '#60a5fa' }}>{brand.engagementScore.toFixed(2)}</td>
+                          <td style={{ padding: '0.75rem', color: '#9ca3af', fontSize: '0.8rem' }}>{brand.topProduct || '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             )}
