@@ -34,15 +34,18 @@ Swagger: `http://localhost:8000/docs`
 added on june 20th:
 
 http://localhost:8000/docs#/retail-analysis/get_seller_top_brands_api_v1_brands_seller_top_brands_post
+
 POST /api/v1/brands/seller/top-brands
+
 Body:
+```json
 {
 "store_url": "https://www.amazon.com/s?me=ASSKFE9KVAV03&marketplaceID=ATVPDKIKX0DER",
 "max_brands": 10,
 "max_pages": 1,
 "include_audit": true
 }
-
+```
 ### Upload seller assortment
 `POST /api/v1/assortments/upload`
 
