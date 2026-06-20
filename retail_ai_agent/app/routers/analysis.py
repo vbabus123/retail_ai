@@ -20,6 +20,8 @@ from app.models import (
     SellerBrandDiffRequest,
     StorefrontScrapeRequest,
     StorefrontScrapeResponse,
+    TopSellerBrandsRequest,
+    TopSellerBrandsResponse,
     RetailerBrandDiffRequest,
     TopSellersRequest,
     TopSellersResponse,
@@ -33,6 +35,7 @@ from app.services.brand_compare import (
     scrape_amazon_top_brands,
     scrape_amazon_best_sellers_brands,
     scrape_storefront_catalog,
+    scrape_seller_top_brands,
 )
 from app.services.comparison import compare_sellers, competitor_insights, marketplace_gap, top_sellers
 from app.services.llm import llm_service
@@ -183,3 +186,20 @@ async def get_retailer_brand_diff(payload: RetailerBrandDiffRequest) -> BrandDif
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/brands/seller/top-brands", response_model=TopSellerBrandsResponse)
+async def get_seller_top_brands(payload: TopSellerBrandsRequest) -> TopSellerBrandsResponse:
+    top_brands, total_products, unique_brands, warning, brand_audit = await scrape_seller_top_brands(
+        payload.store_url,
+        max_brands=payload.max_brands,
+        max_pages=payload.max_pages,
+    )
+    return TopSellerBrandsResponse(
+        store_url=payload.store_url,
+        top_brands=top_brands,
+        total_products_analyzed=total_products,
+        total_unique_brands=unique_brands,
+        warning=warning,
+        brand_audit=brand_audit if payload.include_audit else [],
+    )
