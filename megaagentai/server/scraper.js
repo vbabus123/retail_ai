@@ -310,9 +310,9 @@ function extractProductFromCard($, $el, asin) {
     ? productLink
     : productLink ? `https://www.amazon.com${productLink}` : (asin ? `https://www.amazon.com/dp/${asin}` : '');
 
-  // Brand (try badge or below-title text)
-  const brand = $el.find('.a-row .a-size-base:first-child, [data-cy="reviews-block"] + .a-row .a-size-base').first().text().trim()
-    || inferBrand(name);
+  // Brand (try badge/below-title text, then sanitize and fallback to title inference)
+  const rawBrand = $el.find('.a-row .a-size-base:first-child, [data-cy="reviews-block"] + .a-row .a-size-base').first().text().trim();
+  const brand = sanitizeBrand(rawBrand) || inferBrand(name);
 
   return {
     name: name.substring(0, 200), // cap length
@@ -330,10 +330,50 @@ function extractProductFromCard($, $el, asin) {
   };
 }
 
+const BRAND_NOISE_PATTERNS = [
+  /bought\s+in\s+past\s+month/i,
+  /out\s+of\s+5\s+stars/i,
+  /ratings?/i,
+  /^\$?\d+[\d.,]*$/,
+  /price/i,
+  /delivery/i,
+  /add\s+to\s+cart/i,
+];
+
+function sanitizeBrand(value) {
+  if (!value) return '';
+
+  const cleaned = value
+    .replace(/\s+/g, ' ')
+    .replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9&\-., ]+$/g, '')
+    .trim();
+
+  if (!cleaned) return '';
+  if (cleaned.length <= 1) return '';
+
+  // Reject non-brand metadata text that sometimes appears in Amazon cards.
+  if (BRAND_NOISE_PATTERNS.some((pattern) => pattern.test(cleaned))) {
+    return '';
+  }
+
+  const firstToken = cleaned.split(/\s+/)[0].replace(/[^A-Za-z0-9&\-]/g, '');
+  if (!firstToken) return '';
+  // Drop numeric-only tokens like "100" or "8" that are not actual brands.
+  if (!/[A-Za-z]/.test(firstToken)) return '';
+  return firstToken;
+}
+
 function inferBrand(name) {
-  // Take first word(s) as brand guess
-  const parts = name.split(/\s+/);
-  return parts.length > 0 ? parts[0] : 'Unknown';
+  // Take first word as brand guess, but skip common metadata lead-ins.
+  const parts = String(name || '').split(/\s+/).filter(Boolean);
+  const stop = new Set(['new', 'best', 'pack', 'set', 'for', 'with', 'by', 'the']);
+  for (const token of parts) {
+    const cleaned = sanitizeBrand(token);
+    if (!cleaned) continue;
+    if (stop.has(cleaned.toLowerCase())) continue;
+    return cleaned;
+  }
+  return 'Unknown';
 }
 
 function extractPaginationFromCheerio($) {
